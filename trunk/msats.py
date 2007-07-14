@@ -3,6 +3,8 @@ import time
 import e32
 import e32db
 import appuifw
+import urllib
+import httplib
 
 class MsatsDb:
 	def __init__(self, db_name):
@@ -100,6 +102,18 @@ class Strategy:
 			dbv.next_line()
 		return results
 	
+	def get_max_id(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,
+					u"SELECT id from strategy ORDER BY id DESC")
+		if 0 == dbv.count_line():
+			results=0
+		else:
+			dbv.first_line()
+			dbv.get_line()
+			results = dbv.col(1)	
+		return results
+		
 	def add(self, e):
 		self.native_db.execute(e.sql_add())
 
@@ -143,8 +157,7 @@ class StrategyEntry:
 		return self.code
 	
 	def get_form(self):
-		result = [(u"Id", 'number', int(self.id)),
-				  (u"Code", 'Text', int(self.code))]
+		result = [(u"Code", 'Text', int(self.code))]
 		if self.type==None:
 			result.append((u"Type", 'combo', (self.StrategyType,0)))
 		else:
@@ -155,12 +168,11 @@ class StrategyEntry:
 		return result
 		
 	def set_from_form(self, form):
-		self.id  = int(form[0][2])
-		self.code  = form[1][2]
-		self.type	 = form[2][2][1]
-		self.startprice   = float(form[3][2])
-		self.uprate   = float(form[4][2])
-		self.downrate   = float(form[5][2])
+		self.code  = form[0][2]
+		self.type	 = form[1][2][1]
+		self.startprice   = float(form[2][2])
+		self.uprate   = float(form[3][2])
+		self.downrate   = float(form[4][2])
 		
 class MsatsApp:
 
@@ -169,8 +181,8 @@ class MsatsApp:
 		self.exit_flag = False
 		appuifw.app.exit_key_handler = self.abort
 		self.entry_list = []
-		self.menu_stockmanage = (u"Stock Manage", self.handle_stockmanage)
-		self.menu_strategy = (u"Strategy Manage", self.handle_strategymange)
+		self.menu_stockmanage = (u"Stock", ((u"Add",handle_stockadd),(u"Delete",handle_stockdelete),(u"Overview",handle_stockoverview)))
+		self.menu_strategy = (u"Strategy", ((u"Add",handle_strategyadd),(u"Delete",handle_strategydelete),,(u"Overview",handle_strategyoverview)))
 		self.menu_run = (u"Run", self.handle_run)
 		appuifw.app.menu = []
 
@@ -209,15 +221,70 @@ class MsatsApp:
 								self.menu_run]
 
 			
-	def handle_stockmanage(self):
-		i=1
+	def handle_stockadd(self):
+		new_entry = StockEntry()
+		data = new_entry.get_form()
+		flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+		f = appuifw.Form(data, flags)
+		f.execute()
+		new_entry.set_from_form(f)
+		self.Stock.add(new_entry)
 		
+	def handle_stockdelete(self):
+		i=1	
+	
+	def handle_stockoverview(self):
+		i=1	
+	
+	def handle_strategyadd(self):
 		
-	def handle_strategymange(self):	
-		i=2
+		new_entry = StrategyEntry()
+		data = new_entry.get_form()
+		flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+		f = appuifw.Form(data, flags)
+		f.execute()
+		new_entry.set_from_form(f)
+		new_entry.id=self.newstrategyid()
+		self.Strategy.add(new_entry)
+		
+	def handle_strategydelete(self):
+		i=1	
+	
+	def handle_strategyoverview(self):
+		i=1	
+
 	
 	def handle_run(self):
 		i=3
+		
+	def newstrategyid(self):
+		id=self.Strategy.get_max_id()
+		return id+1
+		
+	def getstock(self,code)
+		#if this code not run,maybe the next open code can't run correctly! 
+	
+		params = urllib.urlencode({'code': unicode(code)})
+		headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain","Host":"www.jili8.com","X-Online-Host":"www.jili8.com"}
+		conn = httplib.HTTPConnection("10.0.0.172")
+		conn.request("POST", "/php/getstock2.php", params, headers)
+		response = conn.getresponse()
+  	
+  	
+		url='http://www.jili8.com/php/getstock2.php?code='+code 
+		proxies={'http':'http://10.0.0.172:80'} 
+		data=urllib.FancyURLopener(proxies).open(url).read() 
+  	
+		try:
+			udata=data.decode("utf8")
+			return udata
+		except:
+			return "error"
+  	
+	def getdataindex(sele,udata,index)
+		usplitdata=[]
+		usplitdata=udata.split(u"|")
+		return usplitdata[index]
 		
 def main():
 	app = MsatsApp()
