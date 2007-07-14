@@ -5,6 +5,7 @@ import e32db
 import appuifw
 import urllib
 import httplib
+import audio
 
 class MsatsDb:
 	def __init__(self, db_name):
@@ -101,7 +102,20 @@ class Strategy:
 			results.append(e)
 			dbv.next_line()
 		return results
-	
+
+	def get_all_enabledentries(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,
+					u"SELECT * from strategy ORDER BY id DESC where enableflag=1")
+		dbv.first_line()
+		results = []
+		for i in range(dbv.count_line()):
+			dbv.get_line()
+			e = StrategyEntry(dbv)
+			results.append(e)
+			dbv.next_line()
+		return results	
+		
 	def get_max_id(self):
 		dbv = e32db.Db_view()
 		dbv.prepare(self.native_db,
@@ -119,9 +133,12 @@ class Strategy:
 
 	def delete(self, e):
 		self.native_db.execute(e.sql_delete())
+	
+	def disable(self, e):
+		self.native_db.execute(e.sql_disable())
 		
 class StrategyEntry:
-	sql_create = u"CREATE TABLE strategy (id integer,code varchar,type integer,startprice float,uprate float,downrate float)"
+	sql_create = u"CREATE TABLE strategy (id integer,code varchar,type integer,startprice float,uprate float,downrate float,enableflag integer)"
 	StrategyType=[u"Sell after up start price",u"Buy after down start price",u"Sell after up previous day price",u"Buy after down previous day price"]
 	
 	def __init__(self, r=None):
@@ -132,6 +149,7 @@ class StrategyEntry:
 			self.startprice  = r.col(4)
 			self.uprate  = r.col(5)
 			self.downrate  = r.col(6)
+			self.enableflag  = r.col(7)
 		else:
 			self.id  = 0
 			self.code  =u''
@@ -139,14 +157,20 @@ class StrategyEntry:
 			self.startprice  = 0.0
 			self.uprate  = 0.0
 			self.downrate  = 0.0
+			self.enableflag  = 0
 			
 	def sql_add(self):
-		sql = "INSERT INTO strategy (id,code,type,startprice,uprate,downrate) VALUES (%d,%s,%d,%d,%d,%d)"%(
+		sql = "INSERT INTO strategy (id,code,type,startprice,uprate,downrate,enableflag) VALUES (%d,%s,%d,%d,%d,%d,%d)"%(
 			self.id,self.code,self.type,self.startprice,self.uprate,sele.downrate)
 		return unicode(sql)
 	
 	def sql_delete(self):
 		sql = "DELETE FROM strategy WHERE id=%d"%\
+			  (self.id)
+		return unicode(sql)
+	
+	def sql_disable(self):
+		sql = "update strategy set enableflag=0 WHERE id=%d"%\
 			  (self.id)
 		return unicode(sql)
 		
@@ -165,6 +189,7 @@ class StrategyEntry:
 		result.append((u"StartPrice", 'number', float(self.startprice)))
 		result.append((u"UpRate", 'number', float(self.uprate)))
 		result.append((u"DownRate", 'number', float(self.downrate)))
+		result.append((u"EnableFlag", 'number', integer(self.enableflag)))
 		return result
 		
 	def set_from_form(self, form):
@@ -263,41 +288,46 @@ class MsatsApp:
 		self.textinfo(self.TextLog,0x004000,"start...")
 		self.stopflag=0
 		while not self.stopflag:
-			stragelist=self.Strategy.get_all_entries()
+			stragelist=self.Strategy.get_all_enabledentries()
 			for j in stragelist:
 				self.textinfo(self.TextLog,0x004000,j.code)
 				data=getstock(j.code)
 				if data!="error":
 					yesterdayprice=float(getdataindex(data,3))
 					nowprice=float(getdataindex(data,6))
+					startprice=float(j.startprice)
+					uprate=float(j.uprate)
+					downrate=float(j.uprate)	
 					self.textinfo(self.TextLog,0x004000,"    now price:%d;yesterday price:%d"%(nowprice,yesterdayprice))
-					if j.type==1:
-						startprice=j.startprice
-						uprate=j.uprate
+					if integer(j.type)==1:
 						sellprice=startprice*(1+uprate)
 						self.textinfo(self.TextLog,0x004000,"    you want to sell it after the start price:%d*(1+%d)=%d"%(startprice,uprate,sellprice))
 						if nowprice>=sellprice:
-							self.textinfo(self.TextLog,0x004000,"    you can sell it now")	
-					if j.type==2:
-						startprice=j.startprice
-						downrate=j.downrate
+							self.textinfo(self.TextLog,0x004000,"    you can sell it now")
+							self.playsound("E:\\sound1.mid")
+							self.Strategy.disable(j)
+					if integer(j.type)==2:
 						buyprice=startprice*(1-downrate)
 						self.textinfo(self.TextLog,0x004000,"    you want to buy it after the start price:%d*(1-%d)=%d"%(startprice,downrate,buyprice))
 						if nowprice<=buyprice:
-							self.textinfo(self.TextLog,0x004000,"    you can buy it now")	
-					if j.type==3:
-						uprate=j.uprate
+							self.textinfo(self.TextLog,0x004000,"    you can buy it now")
+							self.playsound("E:\\sound1.mid")
+							self.Strategy.disable(j)	
+					if integer(j.type)==3:
 						sellprice=yesterdayprice*(1+uprate)
 						self.textinfo(self.TextLog,0x004000,"    you want to sell it after the yesterday price:%d*(1+%d)=%d"%(yesterdayprice,uprate,sellprice))
 						if nowprice>=sellprice:
-							self.textinfo(self.TextLog,0x004000,"    you can sell it now")	
-					if j.type==4:
-						downrate=j.downrate
+							self.textinfo(self.TextLog,0x004000,"    you can sell it now")
+							self.playsound("E:\\sound1.mid")
+							self.Strategy.disable(j)	
+					if integer(j.type)==4:
 						buyprice=yesterdayprice*(1-downrate)
 						self.textinfo(self.TextLog,0x004000,"    you want to buy it after the yesterday price:%d*(1-%d)=%d"%(yesterdayprice,downrate,buyprice))
 						if nowprice<=buyprice:
-							self.textinfo(self.TextLog,0x004000,"    you can buy it now")	
-					
+							self.textinfo(self.TextLog,0x004000,"    you can buy it now")
+							self.playsound("E:\\sound1.mid")	
+							self.Strategy.disable(j)
+							
 			e32.ao_sleep(120)  # sleep 120 sec
 
 	def handle_runstop(self):
@@ -306,6 +336,11 @@ class MsatsApp:
 	def newstrategyid(self):
 		id=self.Strategy.get_max_id()
 		return id+1
+		
+	def playsound(self,sound)
+		S = audio.Sound.open(sound)
+		S.play()
+
 		
 	def getstock(self,code)
 		#if this code not run,maybe the next open code can't run correctly! 
