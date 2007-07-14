@@ -175,15 +175,16 @@ class StrategyEntry:
 		self.downrate   = float(form[4][2])
 		
 class MsatsApp:
-
+	LogText=appuifw.Text(u'')
+	
 	def __init__(self):
 		self.lock = e32.Ao_lock()
 		self.exit_flag = False
 		appuifw.app.exit_key_handler = self.abort
 		self.entry_list = []
 		self.menu_stockmanage = (u"Stock", ((u"Add",handle_stockadd),(u"Delete",handle_stockdelete),(u"Overview",handle_stockoverview)))
-		self.menu_strategy = (u"Strategy", ((u"Add",handle_strategyadd),(u"Delete",handle_strategydelete),,(u"Overview",handle_strategyoverview)))
-		self.menu_run = (u"Run", self.handle_run)
+		self.menu_strategy = (u"Strategy", ((u"Add",handle_strategyadd),(u"Delete",handle_strategydelete),(u"Overview",handle_strategyoverview)))
+		self.menu_run = (u"Run", ((u"Start",handle_runstart),(u"Stop",handle_runstop)))
 		appuifw.app.menu = []
 
 	def initialize_db(self, db_name):
@@ -212,6 +213,7 @@ class MsatsApp:
 		self.entry_list = self.Personsrelation.get_all_entries()
 
 	def show_main_view(self):
+		appuifw.app.body=self.LogText
 		self.show_menu()  
 	
 	def show_menu(self):	
@@ -220,6 +222,9 @@ class MsatsApp:
 								self.menu_persondie,
 								self.menu_run]
 
+	def textinfo(self,textobj,color,info):
+		textobj.color=color
+		textobj.add(info+u'\n')	
 			
 	def handle_stockadd(self):
 		new_entry = StockEntry()
@@ -254,9 +259,50 @@ class MsatsApp:
 		i=1	
 
 	
-	def handle_run(self):
-		i=3
-		
+	def handle_runstart(self):
+		self.textinfo(self.TextLog,0x004000,"start...")
+		self.stopflag=0
+		while not self.stopflag:
+			stragelist=self.Strategy.get_all_entries()
+			for j in stragelist:
+				self.textinfo(self.TextLog,0x004000,j.code)
+				data=getstock(j.code)
+				if data!="error":
+					yesterdayprice=float(getdataindex(data,3))
+					nowprice=float(getdataindex(data,6))
+					self.textinfo(self.TextLog,0x004000,"    now price:%d;yesterday price:%d"%(nowprice,yesterdayprice))
+					if j.type==1:
+						startprice=j.startprice
+						uprate=j.uprate
+						sellprice=startprice*(1+uprate)
+						self.textinfo(self.TextLog,0x004000,"    you want to sell it after the start price:%d*(1+%d)=%d"%(startprice,uprate,sellprice))
+						if nowprice>=sellprice:
+							self.textinfo(self.TextLog,0x004000,"    you can sell it now")	
+					if j.type==2:
+						startprice=j.startprice
+						downrate=j.downrate
+						buyprice=startprice*(1-downrate)
+						self.textinfo(self.TextLog,0x004000,"    you want to buy it after the start price:%d*(1-%d)=%d"%(startprice,downrate,buyprice))
+						if nowprice<=buyprice:
+							self.textinfo(self.TextLog,0x004000,"    you can buy it now")	
+					if j.type==3:
+						uprate=j.uprate
+						sellprice=yesterdayprice*(1+uprate)
+						self.textinfo(self.TextLog,0x004000,"    you want to sell it after the yesterday price:%d*(1+%d)=%d"%(yesterdayprice,uprate,sellprice))
+						if nowprice>=sellprice:
+							self.textinfo(self.TextLog,0x004000,"    you can sell it now")	
+					if j.type==4:
+						downrate=j.downrate
+						buyprice=yesterdayprice*(1-downrate)
+						self.textinfo(self.TextLog,0x004000,"    you want to buy it after the yesterday price:%d*(1-%d)=%d"%(yesterdayprice,downrate,buyprice))
+						if nowprice<=buyprice:
+							self.textinfo(self.TextLog,0x004000,"    you can buy it now")	
+					
+			e32.ao_sleep(120)  # sleep 120 sec
+
+	def handle_runstop(self):
+		self.stopflag=1
+				
 	def newstrategyid(self):
 		id=self.Strategy.get_max_id()
 		return id+1
