@@ -61,12 +61,12 @@ class StockEntry:
 			self.code  = u""
 			
 	def sql_add(self):
-		sql = "INSERT INTO stock (code) VALUES (%s)"%(
+		sql = "INSERT INTO stock (code) VALUES ('%s')"%(
 			self.code)
 		return unicode(sql)
 	
 	def sql_delete(self):
-		sql = "DELETE FROM stock WHERE code=%s"%\
+		sql = "DELETE FROM stock WHERE code='%s'"%\
 			  (self.code)
 		return unicode(sql)
 		
@@ -92,8 +92,7 @@ class Strategy:
 	
 	def get_all_entries(self):
 		dbv = e32db.Db_view()
-		dbv.prepare(self.native_db,
-					u"SELECT * from strategy ORDER BY id DESC")
+		dbv.prepare(self.native_db,u"SELECT * from strategy ORDER BY id DESC")
 		dbv.first_line()
 		results = []
 		for i in range(dbv.count_line()):
@@ -105,8 +104,7 @@ class Strategy:
 
 	def get_all_enabledentries(self):
 		dbv = e32db.Db_view()
-		dbv.prepare(self.native_db,
-					u"SELECT * from strategy ORDER BY id DESC where enableflag=1")
+		dbv.prepare(self.native_db,u"SELECT * from strategy where enableflag=1")
 		dbv.first_line()
 		results = []
 		for i in range(dbv.count_line()):
@@ -145,11 +143,11 @@ class StrategyEntry:
 		if r:			
 			self.id  = r.col(1)
 			self.code  = r.col(2)
-			self.type  = r.col(3)
-			self.startprice  = r.col(4)
-			self.uprate  = r.col(5)
-			self.downrate  = r.col(6)
-			self.enableflag  = r.col(7)
+			self.type  = int(r.col(3))
+			self.startprice  = float(r.col(4))
+			self.uprate  = float(r.col(5))
+			self.downrate  = float(r.col(6))
+			self.enableflag  = int(r.col(7))
 		else:
 			self.id  = 0
 			self.code  =u''
@@ -160,8 +158,8 @@ class StrategyEntry:
 			self.enableflag  = 0
 			
 	def sql_add(self):
-		sql = "INSERT INTO strategy (id,code,type,startprice,uprate,downrate,enableflag) VALUES (%d,%s,%d,%d,%d,%d,%d)"%(
-			self.id,self.code,self.type,self.startprice,self.uprate,sele.downrate)
+		sql = "INSERT INTO strategy (id,code,type,startprice,uprate,downrate,enableflag) VALUES (%d,'%s',%d,%f,%f,%f,%d)"%(
+			self.id,self.code,self.type,self.startprice,self.uprate,self.downrate,self.enableflag)
 		return unicode(sql)
 	
 	def sql_delete(self):
@@ -181,15 +179,15 @@ class StrategyEntry:
 		return self.code
 	
 	def get_form(self):
-		result = [(u"Code", 'Text', int(self.code))]
+		result = [(u"Code", 'text', self.code)]
 		if self.type==None:
 			result.append((u"Type", 'combo', (self.StrategyType,0)))
 		else:
 			result.append((u"Type", 'combo', (self.StrategyType,self.type)))
-		result.append((u"StartPrice", 'number', float(self.startprice)))
-		result.append((u"UpRate", 'number', float(self.uprate)))
-		result.append((u"DownRate", 'number', float(self.downrate)))
-		result.append((u"EnableFlag", 'number', integer(self.enableflag)))
+		result.append((u"StartPrice", 'text', unicode(str(self.startprice))))
+		result.append((u"UpRate", 'text', unicode(str(self.uprate))))
+		result.append((u"DownRate", 'text', unicode(str(self.downrate))))
+		result.append((u"EnableFlag", 'number', self.enableflag))
 		return result
 		
 	def set_from_form(self, form):
@@ -198,18 +196,20 @@ class StrategyEntry:
 		self.startprice   = float(form[2][2])
 		self.uprate   = float(form[3][2])
 		self.downrate   = float(form[4][2])
+		self.enableflag   = int(form[5][2])
 		
 class MsatsApp:
 	LogText=appuifw.Text(u'')
+	timer = e32.Ao_timer() 
 	
 	def __init__(self):
 		self.lock = e32.Ao_lock()
 		self.exit_flag = False
 		appuifw.app.exit_key_handler = self.abort
 		self.entry_list = []
-		self.menu_stockmanage = (u"Stock", ((u"Add",handle_stockadd),(u"Delete",handle_stockdelete),(u"Overview",handle_stockoverview)))
-		self.menu_strategy = (u"Strategy", ((u"Add",handle_strategyadd),(u"Delete",handle_strategydelete),(u"Overview",handle_strategyoverview)))
-		self.menu_run = (u"Run", ((u"Start",handle_runstart),(u"Stop",handle_runstop)))
+		self.menu_stockmanage = (u"Stock", ((u"Add",self.handle_stockadd),(u"Delete",self.handle_stockdelete),(u"Overview",self.handle_stockoverview)))
+		self.menu_strategy = (u"Strategy", ((u"Add",self.handle_strategyadd),(u"Delete",self.handle_strategydelete),(u"Overview",self.handle_strategyoverview)))
+		self.menu_run = (u"Run", ((u"Start",self.handle_runstart),(u"Stop",self.handle_runstop)))
 		appuifw.app.menu = []
 
 	def initialize_db(self, db_name):
@@ -241,7 +241,6 @@ class MsatsApp:
 	def show_menu(self):	
 		appuifw.app.menu = [self.menu_stockmanage,
 								self.menu_strategy,
-								self.menu_persondie,
 								self.menu_run]
 
 	def textinfo(self,textobj,color,info):
@@ -273,9 +272,9 @@ class MsatsApp:
 		code=appuifw.query(u"Stock code",'text')
 		if code==None:
 			return
-		new_entry = StokckEntry()
+		new_entry = StockEntry()
 		new_entry.code=code
-		this.Stock.delete(new_entry)	
+		self.Stock.delete(new_entry)	
 				
 	def handle_stockoverview(self):
 		self.main_view = appuifw.Listbox([(u"Loading...", u"")], self.handle_view_entry)
@@ -301,9 +300,9 @@ class MsatsApp:
 		id=appuifw.query(u"Strategy id",'number')
 		if id==None:
 			return
-		new_entry = Strategy()
+		new_entry = StrategyEntry()
 		new_entry.id=id
-		this.Strategy.delete(new_entry)
+		self.Strategy.delete(new_entry)
 	
 	def handle_strategyoverview(self):
 		self.main_view = appuifw.Listbox([(u"Loading...", u"")],self.handle_view_entry)
@@ -312,57 +311,63 @@ class MsatsApp:
 		if not self.entry_list:
 			content = [(u"(Empty)", u"")]
 		else:
-			content = [(item.id,item.code) for item in self.entry_list]
+			content = [(unicode(str(item.id)),item.code) for item in self.entry_list]
 		self.main_view.set_list(content)
 
 	
 	def handle_runstart(self):
-		self.textinfo(self.TextLog,0x004000,"start...")
+		self.textinfo(self.LogText,0x004000,"start...")
 		self.stopflag=0
 		while not self.stopflag:
 			stragelist=self.Strategy.get_all_enabledentries()
 			for j in stragelist:
-				self.textinfo(self.TextLog,0x004000,j.code)
-				data=getstock(j.code)
+				self.textinfo(self.LogText,0x004000,j.code)
+				data=self.getstock(j.code)
+				self.textinfo(self.LogText,0x004000,data)
 				if data!="error":
-					yesterdayprice=float(getdataindex(data,3))
-					nowprice=float(getdataindex(data,6))
+					try:
+						yesterdayprice=float(self.getdataindex(data,3))
+						nowprice=float(self.getdataindex(data,6))
+					except:
+						self.textinfo(self.LogText,0x004000,"the info is not complete")
+						continue
+						
 					startprice=float(j.startprice)
 					uprate=float(j.uprate)
 					downrate=float(j.uprate)	
-					self.textinfo(self.TextLog,0x004000,"    now price:%d;yesterday price:%d"%(nowprice,yesterdayprice))
-					if integer(j.type)==1:
+					self.textinfo(self.LogText,0x004000,"    now price:%f;yesterday price:%f"%(nowprice,yesterdayprice))
+					if int(j.type)==0:
 						sellprice=startprice*(1+uprate)
-						self.textinfo(self.TextLog,0x004000,"    you want to sell it after the start price:%d*(1+%d)=%d"%(startprice,uprate,sellprice))
+						self.textinfo(self.LogText,0x004000,"    you want to sell it after the start price:%f*(1+%f)=%f"%(startprice,uprate,sellprice))
 						if nowprice>=sellprice:
-							self.textinfo(self.TextLog,0x004000,"    you can sell it now")
-							self.playsound("E:\\sound1.mid")
+							self.textinfo(self.LogText,0x004000,"    you can sell it now")
+							self.playsound("E:\\night.mp3")
 							self.Strategy.disable(j)
-					if integer(j.type)==2:
+					if int(j.type)==1:
 						buyprice=startprice*(1-downrate)
-						self.textinfo(self.TextLog,0x004000,"    you want to buy it after the start price:%d*(1-%d)=%d"%(startprice,downrate,buyprice))
+						self.textinfo(self.LogText,0x004000,"    you want to buy it after the start price:%f*(1-%f)=%f"%(startprice,downrate,buyprice))
 						if nowprice<=buyprice:
-							self.textinfo(self.TextLog,0x004000,"    you can buy it now")
-							self.playsound("E:\\sound1.mid")
+							self.textinfo(self.LogText,0x004000,"    you can buy it now")
+							self.playsound("E:\\night.mp3")
 							self.Strategy.disable(j)	
-					if integer(j.type)==3:
+					if int(j.type)==2:
 						sellprice=yesterdayprice*(1+uprate)
-						self.textinfo(self.TextLog,0x004000,"    you want to sell it after the yesterday price:%d*(1+%d)=%d"%(yesterdayprice,uprate,sellprice))
+						self.textinfo(self.LogText,0x004000,"    you want to sell it after the yesterday price:%f*(1+%f)=%f"%(yesterdayprice,uprate,sellprice))
 						if nowprice>=sellprice:
-							self.textinfo(self.TextLog,0x004000,"    you can sell it now")
-							self.playsound("E:\\sound1.mid")
+							self.textinfo(self.LogText,0x004000,"    you can sell it now")
+							self.playsound("E:\\night.mp3")
 							self.Strategy.disable(j)	
-					if integer(j.type)==4:
+					if int(j.type)==3:
 						buyprice=yesterdayprice*(1-downrate)
-						self.textinfo(self.TextLog,0x004000,"    you want to buy it after the yesterday price:%d*(1-%d)=%d"%(yesterdayprice,downrate,buyprice))
+						self.textinfo(self.LogText,0x004000,"    you want to buy it after the yesterday price:%f*(1-%f)=%f"%(yesterdayprice,downrate,buyprice))
 						if nowprice<=buyprice:
-							self.textinfo(self.TextLog,0x004000,"    you can buy it now")
-							self.playsound("E:\\sound1.mid")	
-							self.Strategy.disable(j)
-							
-			e32.ao_sleep(120)  # sleep 120 sec
+							self.textinfo(self.LogText,0x004000,"    you can buy it now")
+							self.playsound("E:\\night.mp3")	
+							self.Strategy.disable(j)				
+			self.timer.after(30)  # sleep 30 sec
 
 	def handle_runstop(self):
+		self.timer.cancel()
 		self.stopflag=1
 				
 	def newstrategyid(self):
@@ -376,21 +381,22 @@ class MsatsApp:
 		
 	def getstock(self,code):
 		#if this code not run,maybe the next open code can't run correctly! 
-	
-		params = urllib.urlencode({'code': unicode(code)})
+		test1 = "000001"
+		params = urllib.urlencode({'code': test1})
 		headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain","Host":"www.jili8.com","X-Online-Host":"www.jili8.com"}
 		conn = httplib.HTTPConnection("10.0.0.172")
 		conn.request("POST", "/php/getstock.php", params, headers)
 		response = conn.getresponse()
 
-		url='http://www.jili8.com/php/getstock.php?code='+code 
+		url='http://www.jili8.com/php/getstock.php?code='+code
+
 		proxies={'http':'http://10.0.0.172:80'} 
 		data=urllib.FancyURLopener(proxies).open(url).read() 
 		try:
 			udata=data.decode("utf8")
 			return udata
 		except:
-			return "error"
+			return u"error"
 
 	def getdataindex(sele,udata,index):
 		usplitdata=[]
