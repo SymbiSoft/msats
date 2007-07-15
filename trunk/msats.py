@@ -74,7 +74,7 @@ class StockEntry:
 		return self.code
 	
 	def get_form(self):
-		result = [(u"Code", 'text', self.code))
+		result = [(u'Code', 'text', self.code)]
 		return result
 		
 	def set_from_form(self, form):
@@ -253,11 +253,11 @@ class MsatsApp:
 			index = self.main_view.current()
 			self.show_entry(self.entry_list[index])
 		self.lock.signal()
-   
+		
 	def show_entry(self, entry):
-  	data = entry.get_form()
-    flags = appuifw.FFormViewModeOnly
-    f = appuifw.Form(data, flags)
+		data = entry.get_form()
+		flags = appuifw.FFormViewModeOnly
+		f = appuifw.Form(data, flags)
 		f.execute()
 	
 	def handle_stockadd(self):
@@ -278,14 +278,13 @@ class MsatsApp:
 		this.Stock.delete(new_entry)	
 				
 	def handle_stockoverview(self):
-		self.main_view = appuifw.Listbox([(u"Loading...", u"")], 
-                                         self.handle_view_entry)
-    appuifw.app.body = self.main_view
-    self.entry_list = self.Stock.get_all_entries()
+		self.main_view = appuifw.Listbox([(u"Loading...", u"")], self.handle_view_entry)
+		appuifw.app.body = self.main_view
+		self.entry_list = self.Stock.get_all_entries()
 		if not self.entry_list:
 			content = [(u"(Empty)", u"")]
 		else:
-			content = [u'',item.code) for item in self.entry_list]
+			content = [(u'',item.code) for item in self.entry_list]
 		self.main_view.set_list(content)
 	
 	def handle_strategyadd(self):
@@ -307,14 +306,13 @@ class MsatsApp:
 		this.Strategy.delete(new_entry)
 	
 	def handle_strategyoverview(self):
-		self.main_view = appuifw.Listbox([(u"Loading...", u"")], 
-                                         self.handle_view_entry)
-    appuifw.app.body = self.main_view
-    self.entry_list = self.Strategy.get_all_entries()
+		self.main_view = appuifw.Listbox([(u"Loading...", u"")],self.handle_view_entry)
+		appuifw.app.body = self.main_view
+		self.entry_list = self.Strategy.get_all_entries()
 		if not self.entry_list:
 			content = [(u"(Empty)", u"")]
 		else:
-			content = [item.id,item.code) for item in self.entry_list]
+			content = [(item.id,item.code) for item in self.entry_list]
 		self.main_view.set_list(content)
 
 	
@@ -371,12 +369,12 @@ class MsatsApp:
 		id=self.Strategy.get_max_id()
 		return id+1
 		
-	def playsound(self,sound)
+	def playsound(self,sound):
 		S = audio.Sound.open(sound)
 		S.play()
 
 		
-	def getstock(self,code)
+	def getstock(self,code):
 		#if this code not run,maybe the next open code can't run correctly! 
 	
 		params = urllib.urlencode({'code': unicode(code)})
@@ -384,19 +382,17 @@ class MsatsApp:
 		conn = httplib.HTTPConnection("10.0.0.172")
 		conn.request("POST", "/php/getstock.php", params, headers)
 		response = conn.getresponse()
-  	
-  	
+
 		url='http://www.jili8.com/php/getstock.php?code='+code 
 		proxies={'http':'http://10.0.0.172:80'} 
 		data=urllib.FancyURLopener(proxies).open(url).read() 
-  	
 		try:
 			udata=data.decode("utf8")
 			return udata
 		except:
 			return "error"
-  	
-	def getdataindex(sele,udata,index)
+
+	def getdataindex(sele,udata,index):
 		usplitdata=[]
 		usplitdata=udata.split(u"|")
 		return usplitdata[index]
