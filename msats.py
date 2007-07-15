@@ -234,9 +234,6 @@ class MsatsApp:
 			self.exit_flag = True
 			self.lock.signal()
 
-	def update_entry_list(self):
-		self.entry_list = self.Personsrelation.get_all_entries()
-
 	def show_main_view(self):
 		appuifw.app.body=self.LogText
 		self.show_menu()  
@@ -250,7 +247,19 @@ class MsatsApp:
 	def textinfo(self,textobj,color,info):
 		textobj.color=color
 		textobj.add(info+u'\n')	
-			
+	
+	def handle_view_entry(self):
+		if self.entry_list:
+			index = self.main_view.current()
+			self.show_entry(self.entry_list[index])
+		self.lock.signal()
+   
+	def show_entry(self, entry):
+  	data = entry.get_form()
+    flags = appuifw.FFormViewModeOnly
+    f = appuifw.Form(data, flags)
+		f.execute()
+	
 	def handle_stockadd(self):
 		new_entry = StockEntry()
 		data = new_entry.get_form()
@@ -261,13 +270,25 @@ class MsatsApp:
 		self.Stock.add(new_entry)
 		
 	def handle_stockdelete(self):
-		i=1	
-	
+		code=appuifw.query(u"Stock code",'text')
+		if code==None:
+			return
+		new_entry = StokckEntry()
+		new_entry.code=code
+		this.Stock.delete(new_entry)	
+				
 	def handle_stockoverview(self):
-		i=1	
+		self.main_view = appuifw.Listbox([(u"Loading...", u"")], 
+                                         self.handle_view_entry)
+    appuifw.app.body = self.main_view
+    self.entry_list = self.Stock.get_all_entries()
+		if not self.entry_list:
+			content = [(u"(Empty)", u"")]
+		else:
+			content = [u'',item.code) for item in self.entry_list]
+		self.main_view.set_list(content)
 	
 	def handle_strategyadd(self):
-		
 		new_entry = StrategyEntry()
 		data = new_entry.get_form()
 		flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
@@ -278,10 +299,23 @@ class MsatsApp:
 		self.Strategy.add(new_entry)
 		
 	def handle_strategydelete(self):
-		i=1	
+		id=appuifw.query(u"Strategy id",'number')
+		if id==None:
+			return
+		new_entry = Strategy()
+		new_entry.id=id
+		this.Strategy.delete(new_entry)
 	
 	def handle_strategyoverview(self):
-		i=1	
+		self.main_view = appuifw.Listbox([(u"Loading...", u"")], 
+                                         self.handle_view_entry)
+    appuifw.app.body = self.main_view
+    self.entry_list = self.Strategy.get_all_entries()
+		if not self.entry_list:
+			content = [(u"(Empty)", u"")]
+		else:
+			content = [item.id,item.code) for item in self.entry_list]
+		self.main_view.set_list(content)
 
 	
 	def handle_runstart(self):
@@ -348,11 +382,11 @@ class MsatsApp:
 		params = urllib.urlencode({'code': unicode(code)})
 		headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain","Host":"www.jili8.com","X-Online-Host":"www.jili8.com"}
 		conn = httplib.HTTPConnection("10.0.0.172")
-		conn.request("POST", "/php/getstock2.php", params, headers)
+		conn.request("POST", "/php/getstock.php", params, headers)
 		response = conn.getresponse()
   	
   	
-		url='http://www.jili8.com/php/getstock2.php?code='+code 
+		url='http://www.jili8.com/php/getstock.php?code='+code 
 		proxies={'http':'http://10.0.0.172:80'} 
 		data=urllib.FancyURLopener(proxies).open(url).read() 
   	
