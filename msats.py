@@ -320,9 +320,16 @@ class MsatsApp:
 		self.stopflag=0
 		while not self.stopflag:
 			stragelist=self.Strategy.get_all_enabledentries()
+			self.textinfo(self.LogText,0x004000,time.ctime())
 			for j in stragelist:
 				self.textinfo(self.LogText,0x004000,j.code)
-				data=self.getstock(j.code)
+				
+				try:
+					data=self.getstock(j.code)
+				except:
+					self.textinfo(self.LogText,0x004000,"get the info error!")
+					continue
+
 				self.textinfo(self.LogText,0x004000,data)
 				if data!="error":
 					try:
@@ -398,7 +405,7 @@ class MsatsApp:
 		except:
 			return u"error"
 
-	def getdataindex(sele,udata,index):
+	def getdataindex(self,udata,index):
 		usplitdata=[]
 		usplitdata=udata.split(u"|")
 		return usplitdata[index]
