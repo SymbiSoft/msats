@@ -348,28 +348,28 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to sell it after the start price:%f*(1+%f)=%f"%(startprice,uprate,sellprice))
 						if nowprice>=sellprice:
 							self.textinfo(self.LogText,0x004000,"    you can sell it now")
-							self.playsound("E:\\night.mp3")
+							self.playsound()
 							self.Strategy.disable(j)
 					if int(j.type)==1:
 						buyprice=startprice*(1-downrate)
 						self.textinfo(self.LogText,0x004000,"    you want to buy it after the start price:%f*(1-%f)=%f"%(startprice,downrate,buyprice))
 						if nowprice<=buyprice:
 							self.textinfo(self.LogText,0x004000,"    you can buy it now")
-							self.playsound("E:\\night.mp3")
+							self.playsound()
 							self.Strategy.disable(j)	
 					if int(j.type)==2:
 						sellprice=yesterdayprice*(1+uprate)
 						self.textinfo(self.LogText,0x004000,"    you want to sell it after the yesterday price:%f*(1+%f)=%f"%(yesterdayprice,uprate,sellprice))
 						if nowprice>=sellprice:
 							self.textinfo(self.LogText,0x004000,"    you can sell it now")
-							self.playsound("E:\\night.mp3")
+							self.playsound()
 							self.Strategy.disable(j)	
 					if int(j.type)==3:
 						buyprice=yesterdayprice*(1-downrate)
 						self.textinfo(self.LogText,0x004000,"    you want to buy it after the yesterday price:%f*(1-%f)=%f"%(yesterdayprice,downrate,buyprice))
 						if nowprice<=buyprice:
 							self.textinfo(self.LogText,0x004000,"    you can buy it now")
-							self.playsound("E:\\night.mp3")	
+							self.playsound()	
 							self.Strategy.disable(j)				
 			self.timer.after(30)  # sleep 30 sec
 
@@ -382,9 +382,7 @@ class MsatsApp:
 		return id+1
 		
 	def playsound(self,sound):
-		S = audio.Sound.open(sound)
-		S.play()
-
+		audio.say("Liberty, love!These two I need. For my love I will sacrifice life, for liberty I will sacrifice my love")
 		
 	def getstock(self,code):
 		#if this code not run,maybe the next open code can't run correctly! 
