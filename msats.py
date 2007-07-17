@@ -46,7 +46,10 @@ class Stock:
 	
 	def add(self, e):
 		self.native_db.execute(e.sql_add())
-
+		
+	def update(self, e):
+		self.native_db.execute(e.sql_update())
+		
 	def delete(self, e):
 		self.native_db.execute(e.sql_delete())
 		
@@ -64,6 +67,12 @@ class StockEntry:
 		sql = "INSERT INTO stock (code) VALUES ('%s')"%(
 			self.code)
 		return unicode(sql)
+
+	def sql_update(self):
+		sql = "update stock set code='%s' where code='%s' "%(
+			self.code,self.code)
+		return unicode(sql)
+	
 	
 	def sql_delete(self):
 		sql = "DELETE FROM stock WHERE code='%s'"%\
@@ -129,6 +138,9 @@ class Strategy:
 	def add(self, e):
 		self.native_db.execute(e.sql_add())
 
+	def update(self, e):
+		self.native_db.execute(e.sql_update())	
+
 	def delete(self, e):
 		self.native_db.execute(e.sql_delete())
 	
@@ -160,6 +172,11 @@ class StrategyEntry:
 	def sql_add(self):
 		sql = "INSERT INTO strategy (id,code,type,startprice,uprate,downrate,enableflag) VALUES (%d,'%s',%d,%f,%f,%f,%d)"%(
 			self.id,self.code,self.type,self.startprice,self.uprate,self.downrate,self.enableflag)
+		return unicode(sql)
+
+	def sql_update(self):
+		sql = "update strategy set code='%s',type=%d,startprice=%f,uprate=%f,downrate=%f,enableflag=%d where id=%d "%(
+			self.code,self.type,self.startprice,self.uprate,self.downrate,self.enableflag,self.id)
 		return unicode(sql)
 	
 	def sql_delete(self):
@@ -200,6 +217,8 @@ class StrategyEntry:
 		
 class MsatsApp:
 	LogText=appuifw.Text(u'')
+	AlertText=appuifw.Text(u'')
+	MoneyText=appuifw.Text(u'')
 	timer = e32.Ao_timer() 
 	
 	def __init__(self):
@@ -207,8 +226,20 @@ class MsatsApp:
 		self.exit_flag = False
 		appuifw.app.exit_key_handler = self.abort
 		self.entry_list = []
-		self.menu_stockmanage = (u"Stock", ((u"Add",self.handle_stockadd),(u"Delete",self.handle_stockdelete),(u"Overview",self.handle_stockoverview)))
-		self.menu_strategy = (u"Strategy", ((u"Add",self.handle_strategyadd),(u"Delete",self.handle_strategydelete),(u"Overview",self.handle_strategyoverview)))
+		self.menu_stock = (u"Stock", self.handle_stockoverview)
+		self.menu_stockadd=(u"Add",self.handle_stockadd)
+		self.menu_stockedit=(u"Edit",self.handle_stockedit)
+		self.menu_stockdelete=(u"Delete",self.handle_stockdelete)
+		self.menu_stockdetail=(u"Detail",self.handle_view_entry)
+		self.menu_stockreturn=(u"Return",self.locksignal)
+		
+		self.menu_strategy = (u"Strategy", self.handle_strategyoverview)
+		self.menu_strategyadd=(u"Add",self.handle_strategyadd)
+		self.menu_strategyedit=(u"Edit",self.handle_strategyedit)
+		self.menu_strategydelete=(u"Delete",self.handle_strategydelete)
+		self.menu_strategydetail=(u"Detail",self.handle_view_entry)
+		self.menu_strategyreturn=(u"Return",self.locksignal)
+		
 		self.menu_run = (u"Run", ((u"Start",self.handle_runstart),(u"Stop",self.handle_runstop)))
 		appuifw.app.menu = []
 
@@ -234,14 +265,37 @@ class MsatsApp:
 			self.exit_flag = True
 			self.lock.signal()
 
+	def handle_tab(self,index):
+		global lb
+		if index == 0:
+			self.log() 
+		if index == 1:
+			self.alert()
+		if index == 2:
+			self.money()
+
+	def log(self):
+		appuifw.app.body=self.LogText
+
+	def alert(self):
+		appuifw.app.body=self.AlertText
+
+	def money(self):
+		appuifw.app.body=self.MoneyText
+		
 	def show_main_view(self):
+		appuifw.app.set_tabs([u"Log",u"Alert",u"Money"],self.handle_tab)
 		appuifw.app.body=self.LogText
 		self.show_menu()  
 	
 	def show_menu(self):	
-		appuifw.app.menu = [self.menu_stockmanage,
-								self.menu_strategy,
-								self.menu_run]
+		appuifw.app.menu = [self.menu_stock,self.menu_strategy,self.menu_run]
+
+	def show_stockmenu(self):	
+		appuifw.app.menu = [self.menu_stockadd,self.menu_stockedit,self.menu_stockdelete,self.menu_stockdetail,self.menu_stockreturn]
+		
+	def show_strategymenu(self):	
+		appuifw.app.menu = [self.menu_strategyadd,self.menu_strategyedit,self.menu_strategydelete,self.menu_strategydetail,self.menu_strategyreturn]
 
 	def textinfo(self,textobj,color,info):
 		textobj.color=color
@@ -251,14 +305,16 @@ class MsatsApp:
 		if self.entry_list:
 			index = self.main_view.current()
 			self.show_entry(self.entry_list[index])
-		self.lock.signal()
 		
 	def show_entry(self, entry):
 		data = entry.get_form()
 		flags = appuifw.FFormViewModeOnly
 		f = appuifw.Form(data, flags)
 		f.execute()
-	
+
+	def locksignal(self):
+		self.lock.signal()
+		
 	def handle_stockadd(self):
 		new_entry = StockEntry()
 		data = new_entry.get_form()
@@ -267,14 +323,27 @@ class MsatsApp:
 		f.execute()
 		new_entry.set_from_form(f)
 		self.Stock.add(new_entry)
+		self.handle_stockoverview()
 		
+	def handle_stockedit(self):
+		if self.entry_list:
+			index = self.main_view.current()
+			data = self.entry_list[index].get_form()
+		
+			flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+			f = appuifw.Form(data, flags)
+			f.execute()
+			new_entry = StockEntry()
+			new_entry.set_from_form(f)
+			self.Stock.update(new_entry)
+			self.handle_stockoverview()
+			
 	def handle_stockdelete(self):
-		code=appuifw.query(u"Stock code",'text')
-		if code==None:
-			return
-		new_entry = StockEntry()
-		new_entry.code=code
-		self.Stock.delete(new_entry)	
+		if self.entry_list:
+			index = self.main_view.current()
+		if appuifw.query(u"Delete entry?", 'query'):
+			self.Stock.delete(self.entry_list[index])
+			self.handle_stockoverview()
 				
 	def handle_stockoverview(self):
 		self.main_view = appuifw.Listbox([(u"Loading...", u"")], self.handle_view_entry)
@@ -285,6 +354,7 @@ class MsatsApp:
 		else:
 			content = [(u'',item.code) for item in self.entry_list]
 		self.main_view.set_list(content)
+		self.show_stockmenu()
 	
 	def handle_strategyadd(self):
 		new_entry = StrategyEntry()
@@ -295,15 +365,29 @@ class MsatsApp:
 		new_entry.set_from_form(f)
 		new_entry.id=self.newstrategyid()
 		self.Strategy.add(new_entry)
+		self.handle_strategyoverview()
+		
+	def handle_strategyedit(self):
+		if self.entry_list:
+			index = self.main_view.current()
+			data = self.entry_list[index].get_form()
+		
+			flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+			f = appuifw.Form(data, flags)
+			f.execute()
+			new_entry = StrategyEntry()
+			new_entry.id=self.entry_list[index].id
+			new_entry.set_from_form(f)
+			self.Strategy.update(new_entry)
+			self.handle_strategyoverview()			
 		
 	def handle_strategydelete(self):
-		id=appuifw.query(u"Strategy id",'number')
-		if id==None:
-			return
-		new_entry = StrategyEntry()
-		new_entry.id=id
-		self.Strategy.delete(new_entry)
-	
+		if self.entry_list:
+			index = self.main_view.current()
+		if appuifw.query(u"Delete entry?", 'query'):
+			self.Strategy.delete(self.entry_list[index])
+			self.handle_strategyoverview()	
+		
 	def handle_strategyoverview(self):
 		self.main_view = appuifw.Listbox([(u"Loading...", u"")],self.handle_view_entry)
 		appuifw.app.body = self.main_view
@@ -313,6 +397,7 @@ class MsatsApp:
 		else:
 			content = [(unicode(str(item.id)),item.code) for item in self.entry_list]
 		self.main_view.set_list(content)
+		self.show_strategymenu()
 
 	
 	def handle_runstart(self):
@@ -348,6 +433,8 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to sell it after the start price:%f*(1+%f)=%f"%(startprice,uprate,sellprice))
 						if nowprice>=sellprice:
 							self.textinfo(self.LogText,0x004000,"    you can sell it now")
+							self.textinfo(self.AlertText,0x004000,time.ctime())
+							self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %f"%(j.code,nowprice))
 							self.playsound()
 							self.Strategy.disable(j)
 					if int(j.type)==1:
@@ -355,6 +442,8 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to buy it after the start price:%f*(1-%f)=%f"%(startprice,downrate,buyprice))
 						if nowprice<=buyprice:
 							self.textinfo(self.LogText,0x004000,"    you can buy it now")
+							self.textinfo(self.AlertText,0x004000,time.ctime())
+							self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %f"%(j.code,nowprice))
 							self.playsound()
 							self.Strategy.disable(j)	
 					if int(j.type)==2:
@@ -362,6 +451,8 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to sell it after the yesterday price:%f*(1+%f)=%f"%(yesterdayprice,uprate,sellprice))
 						if nowprice>=sellprice:
 							self.textinfo(self.LogText,0x004000,"    you can sell it now")
+							self.textinfo(self.AlertText,0x004000,time.ctime())
+							self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %f"%(j.code,nowprice))
 							self.playsound()
 							self.Strategy.disable(j)	
 					if int(j.type)==3:
@@ -369,6 +460,8 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to buy it after the yesterday price:%f*(1-%f)=%f"%(yesterdayprice,downrate,buyprice))
 						if nowprice<=buyprice:
 							self.textinfo(self.LogText,0x004000,"    you can buy it now")
+							self.textinfo(self.AlertText,0x004000,time.ctime())
+							self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %f"%(j.code,nowprice))
 							self.playsound()	
 							self.Strategy.disable(j)				
 			self.timer.after(30)  # sleep 30 sec
@@ -381,7 +474,7 @@ class MsatsApp:
 		id=self.Strategy.get_max_id()
 		return id+1
 		
-	def playsound(self,sound):
+	def playsound(self):
 		audio.say("Liberty, love!These two I need. For my love I will sacrifice life, for liberty I will sacrifice my love")
 		
 	def getstock(self,code):
