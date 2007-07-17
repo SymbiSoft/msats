@@ -399,16 +399,24 @@ class MsatsApp:
 		self.main_view.set_list(content)
 		self.show_strategymenu()
 
+
+	def mynowtime(self):
+		return time.ctime()
 	
 	def handle_runstart(self):
 		self.textinfo(self.LogText,0x004000,"start...")
 		self.stopflag=0
-		while not self.stopflag:
+
+		if not appuifw.query(u"Not trade time,run continue?",'query'):
+			return
+		
+		while self.stopflag!=1:
 			stragelist=self.Strategy.get_all_enabledentries()
-			self.textinfo(self.LogText,0x004000,time.ctime())
+			self.textinfo(self.LogText,0x004000,self.mynowtime())
 			for j in stragelist:
+				if self.stopflag==1:
+					break
 				self.textinfo(self.LogText,0x004000,j.code)
-				
 				try:
 					data=self.getstock(j.code)
 				except:
@@ -433,7 +441,7 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to sell it after the start price:%f*(1+%f)=%f"%(startprice,uprate,sellprice))
 						if nowprice>=sellprice:
 							self.textinfo(self.LogText,0x004000,"    you can sell it now")
-							self.textinfo(self.AlertText,0x004000,time.ctime())
+							self.textinfo(self.AlertText,0x004000,self.mynowtime())
 							self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %f"%(j.code,nowprice))
 							self.playsound()
 							self.Strategy.disable(j)
@@ -442,7 +450,7 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to buy it after the start price:%f*(1-%f)=%f"%(startprice,downrate,buyprice))
 						if nowprice<=buyprice:
 							self.textinfo(self.LogText,0x004000,"    you can buy it now")
-							self.textinfo(self.AlertText,0x004000,time.ctime())
+							self.textinfo(self.AlertText,0x004000,self.mynowtime())
 							self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %f"%(j.code,nowprice))
 							self.playsound()
 							self.Strategy.disable(j)	
@@ -451,7 +459,7 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to sell it after the yesterday price:%f*(1+%f)=%f"%(yesterdayprice,uprate,sellprice))
 						if nowprice>=sellprice:
 							self.textinfo(self.LogText,0x004000,"    you can sell it now")
-							self.textinfo(self.AlertText,0x004000,time.ctime())
+							self.textinfo(self.AlertText,0x004000,self.mynowtime())
 							self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %f"%(j.code,nowprice))
 							self.playsound()
 							self.Strategy.disable(j)	
@@ -460,12 +468,14 @@ class MsatsApp:
 						self.textinfo(self.LogText,0x004000,"    you want to buy it after the yesterday price:%f*(1-%f)=%f"%(yesterdayprice,downrate,buyprice))
 						if nowprice<=buyprice:
 							self.textinfo(self.LogText,0x004000,"    you can buy it now")
-							self.textinfo(self.AlertText,0x004000,time.ctime())
+							self.textinfo(self.AlertText,0x004000,self.mynowtime())
 							self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %f"%(j.code,nowprice))
 							self.playsound()	
-							self.Strategy.disable(j)				
-			self.timer.after(30)  # sleep 30 sec
-
+							self.Strategy.disable(j)
+			if self.stopflag!=1:				
+				self.timer.after(30)  # sleep 30 sec
+		self.textinfo(self.LogText,0x004000,"stoped")
+		
 	def handle_runstop(self):
 		self.timer.cancel()
 		self.stopflag=1
