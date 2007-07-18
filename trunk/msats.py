@@ -15,12 +15,219 @@ class MsatsDb:
 		except:
 			self.native_db.create(db_name)
 			self.native_db.open(db_name)
+			self.native_db.execute(MoneyEntry.sql_create)
+			self.native_db.execute(TradeEntry.sql_create)
 			self.native_db.execute(StockEntry.sql_create)
 			self.native_db.execute(StrategyEntry.sql_create)
 
 	def close(self):
 		self.native_db.close()
 
+class Money:
+	def __init__(self, db_name):
+		try:
+			self.native_db = e32db.Dbms()
+			self.native_db.open(db_name)
+		except:
+			MsatsDb(db_name)
+			self.native_db = e32db.Dbms()
+			self.native_db.open(db_name)	
+	
+	def get_all_entries(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,
+					u"SELECT * from money ORDER BY id DESC")
+		dbv.first_line()
+		results = []
+		for i in range(dbv.count_line()):
+			dbv.get_line()
+			e = MoneyEntry(dbv)
+			results.append(e)
+			dbv.next_line()
+		return results
+
+	def get_max_id(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,
+					u"SELECT id from money ORDER BY id DESC")
+		if 0 == dbv.count_line():
+			results=0
+		else:
+			dbv.first_line()
+			dbv.get_line()
+			results = dbv.col(1)	
+		return results
+	
+	def add(self, e):
+		self.native_db.execute(e.sql_add())
+		
+	def update(self, e):
+		self.native_db.execute(e.sql_update())
+		
+	def delete(self, e):
+		self.native_db.execute(e.sql_delete())
+		
+class MoneyEntry:
+	sql_create = u"CREATE TABLE money (id integer,date timestamp,type integer,money float)"
+	MoneyType=[u"Increase",u"Decrease"]
+	
+	def __init__(self, r=None):
+		if r:			
+			self.id  = int(r.col(1))
+			self.date  = float(r.col(2))
+			self.type  = int(r.col(3))
+			self.money  = float(r.col(4))
+		else:
+			self.id  = 0
+			self.date  =time.time()
+			self.type  = 0
+			self.money  = 0.0
+			
+	def sql_add(self):
+		sql = "INSERT INTO money (id,date,type,money) VALUES (%d,#%s#,%d,%f)"%(self.id,e32db.format_time(self.date),self.type,self.money)
+		return unicode(sql)
+
+	def sql_update(self):
+		sql = "update money set date=#%s#,type=%d,money=%f where id=%d"%(
+			e32db.format_time(self.date),self.type,self.money,self.id)
+		return unicode(sql)
+	
+	def sql_delete(self):
+		sql = "DELETE FROM money WHERE id=%d"%\
+			  (self.id)
+		return unicode(sql)
+	
+	def get_id(self):
+		return self.id	
+	
+	def get_date(self):
+		return self.date
+	
+	def get_form(self):
+		 # Convert Unix timestamp into the form the form accepts.
+		(yr, mo, da, h, m, s, wd, jd, ds) =time.localtime(self.date)
+		m += 60*h # 60 minutes per hour
+		s += 60*m # 60 seconds per minute
+		result = [(u"Date", 'date', float(self.date-s))]
+		if self.type==None:
+			result.append((u"Type", 'combo', (self.MoneyType,0)))
+		else:
+			result.append((u"Type", 'combo', (self.MoneyType,self.type)))
+		result.append((u"Money", 'text', unicode(str(self.money))))
+		return result
+		
+	def set_from_form(self, form):
+		self.date  = float(form[0][2])
+		self.type	 = int(form[1][2][1])
+		self.money   = float(form[2][2])
+
+class Trade:
+	def __init__(self, db_name):
+		try:
+			self.native_db = e32db.Dbms()
+			self.native_db.open(db_name)
+		except:
+			MsatsDb(db_name)
+			self.native_db = e32db.Dbms()
+			self.native_db.open(db_name)	
+	
+	def get_all_entries(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,
+					u"SELECT * from trade ORDER BY id DESC")
+		dbv.first_line()
+		results = []
+		for i in range(dbv.count_line()):
+			dbv.get_line()
+			e = TradeEntry(dbv)
+			results.append(e)
+			dbv.next_line()
+		return results
+
+	def get_max_id(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,
+					u"SELECT id from trade ORDER BY id DESC")
+		if 0 == dbv.count_line():
+			results=0
+		else:
+			dbv.first_line()
+			dbv.get_line()
+			results = dbv.col(1)	
+		return results
+	
+	def add(self, e):
+		self.native_db.execute(e.sql_add())
+		
+	def update(self, e):
+		self.native_db.execute(e.sql_update())
+		
+	def delete(self, e):
+		self.native_db.execute(e.sql_delete())
+		
+class TradeEntry:
+	sql_create = u"CREATE TABLE trade (id integer,date timestamp,type integer,code varchar,price float,num integer)"
+	TradeType=[u"Buy",u"Sell"]
+	
+	def __init__(self, r=None):
+		if r:			
+			self.id  = int(r.col(1))
+			self.date  = float(r.col(2))
+			self.type  = int(r.col(3))
+			self.code=r.col(4)
+			self.price  = float(r.col(5))
+			self.num  = int(r.col(6))
+		else:
+			self.id  = 0
+			self.date  =time.time()
+			self.type  = 0
+			self.code=u''
+			self.price  = 0.0
+			self.num  = 0
+			
+	def sql_add(self):
+		sql = "INSERT INTO trade (id,date,type,code,price,num) VALUES (%d,#%s#,%d,'%s',%f,%d)"%(
+			self.id,e32db.format_time(self.date),self.type,self.code,self.price,self.num)
+		return unicode(sql)
+
+	def sql_update(self):
+		sql = "update trade set date=#%s#,type=%d,code='%s',price=%f,num=%d where id=%d"%(
+			e32db.format_time(self.date),self.type,self.code,self.price,self.num,self.id)
+		return unicode(sql)
+	
+	def sql_delete(self):
+		sql = "DELETE FROM trade WHERE id=%d"%\
+			  (self.id)
+		return unicode(sql)
+	
+	def get_id(self):
+		return self.id	
+	
+	def get_date(self):
+		return self.date
+	
+	def get_form(self):
+		 # Convert Unix timestamp into the form the form accepts.
+		(yr, mo, da, h, m, s, wd, jd, ds) =time.localtime(self.date)
+		m += 60*h # 60 minutes per hour
+		s += 60*m # 60 seconds per minute
+		result = [(u"Date", 'date', float(self.date-s))]
+		if self.type==None:
+			result.append((u"Type", 'combo', (self.TradeType,0)))
+		else:
+			result.append((u"Type", 'combo', (self.TradeType,self.type)))
+		result.append((u"Code", 'text', self.code))
+		result.append((u"Price", 'text', unicode(str(self.price))))
+		result.append((u"Num", 'number', self.num))
+		return result
+		
+	def set_from_form(self, form):
+		self.date  = float(form[0][2])
+		self.type	 = int(form[1][2][1])
+		self.code    =form[2][2]
+		self.price   = float(form[3][2])
+		self.num    =int(form[4][2])
+		
 class Stock:
 	def __init__(self, db_name):
 		try:
@@ -175,7 +382,7 @@ class StrategyEntry:
 		return unicode(sql)
 
 	def sql_update(self):
-		sql = "update strategy set code='%s',type=%d,startprice=%f,uprate=%f,downrate=%f,enableflag=%d where id=%d "%(
+		sql = "update strategy set code='%s',type=%d,startprice=%f,uprate=%f,downrate=%f,enableflag=%d where id=%d"%(
 			self.code,self.type,self.startprice,self.uprate,self.downrate,self.enableflag,self.id)
 		return unicode(sql)
 	
@@ -226,6 +433,21 @@ class MsatsApp:
 		self.exit_flag = False
 		appuifw.app.exit_key_handler = self.abort
 		self.entry_list = []
+
+		self.menu_money = (u"Money", self.handle_moneyoverview)
+		self.menu_moneyadd=(u"Add",self.handle_moneyadd)
+		self.menu_moneyedit=(u"Edit",self.handle_moneyedit)
+		self.menu_moneydelete=(u"Delete",self.handle_moneydelete)
+		self.menu_moneydetail=(u"Detail",self.handle_view_entry)
+		self.menu_moneyreturn=(u"Return",self.locksignal)
+		
+		self.menu_trade = (u"Trade", self.handle_tradeoverview)
+		self.menu_tradeadd=(u"Add",self.handle_tradeadd)
+		self.menu_tradeedit=(u"Edit",self.handle_tradeedit)
+		self.menu_tradedelete=(u"Delete",self.handle_tradedelete)
+		self.menu_tradedetail=(u"Detail",self.handle_view_entry)
+		self.menu_tradereturn=(u"Return",self.locksignal)
+		
 		self.menu_stock = (u"Stock", self.handle_stockoverview)
 		self.menu_stockadd=(u"Add",self.handle_stockadd)
 		self.menu_stockedit=(u"Edit",self.handle_stockedit)
@@ -245,6 +467,8 @@ class MsatsApp:
 
 	def initialize_db(self, db_name):
 		self.msats = MsatsDb(db_name)
+		self.Money = Money(db_name)
+		self.Trade = Trade(db_name)
 		self.Stock = Stock(db_name)
 		self.Strategy = Strategy(db_name)
 		
@@ -289,7 +513,13 @@ class MsatsApp:
 		self.show_menu()  
 	
 	def show_menu(self):	
-		appuifw.app.menu = [self.menu_stock,self.menu_strategy,self.menu_run]
+		appuifw.app.menu = [self.menu_money,self.menu_trade,self.menu_stock,self.menu_strategy,self.menu_run]
+
+	def show_moneymenu(self):	
+		appuifw.app.menu = [self.menu_moneyadd,self.menu_moneyedit,self.menu_moneydelete,self.menu_moneydetail,self.menu_moneyreturn]
+		
+	def show_trademenu(self):	
+		appuifw.app.menu = [self.menu_tradeadd,self.menu_tradeedit,self.menu_tradedelete,self.menu_tradedetail,self.menu_tradereturn]
 
 	def show_stockmenu(self):	
 		appuifw.app.menu = [self.menu_stockadd,self.menu_stockedit,self.menu_stockdelete,self.menu_stockdetail,self.menu_stockreturn]
@@ -315,6 +545,92 @@ class MsatsApp:
 	def locksignal(self):
 		self.lock.signal()
 		
+	def handle_moneyadd(self):
+		new_entry = MoneyEntry()
+		data = new_entry.get_form()
+		flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+		f = appuifw.Form(data, flags)
+		f.execute()
+		new_entry.set_from_form(f)
+		new_entry.id=self.newmoneyid()
+		self.Money.add(new_entry)
+		self.handle_moneyoverview()
+		
+	def handle_moneyedit(self):
+		if self.entry_list:
+			index = self.main_view.current()
+			data = self.entry_list[index].get_form()
+		
+			flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+			f = appuifw.Form(data, flags)
+			f.execute()
+			new_entry = MoneyEntry()
+			new_entry.id=int(self.entry_list[index].id)
+			new_entry.set_from_form(f)
+			self.Money.update(new_entry)
+			self.handle_moneyoverview()			
+		
+	def handle_moneydelete(self):
+		if self.entry_list:
+			index = self.main_view.current()
+		if appuifw.query(u"Delete entry?", 'query'):
+			self.Money.delete(self.entry_list[index])
+			self.handle_moneyoverview()	
+		
+	def handle_moneyoverview(self):
+		self.main_view = appuifw.Listbox([(u"Loading...", u"")],self.handle_view_entry)
+		appuifw.app.body = self.main_view
+		self.entry_list = self.Money.get_all_entries()
+		if not self.entry_list:
+			content = [(u"(Empty)", u"")]
+		else:
+			content = [(unicode(str(item.id)),unicode(str(item.money))) for item in self.entry_list]
+		self.main_view.set_list(content)
+		self.show_moneymenu()
+
+	def handle_tradeadd(self):
+		new_entry = TradeEntry()
+		data = new_entry.get_form()
+		flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+		f = appuifw.Form(data, flags)
+		f.execute()
+		new_entry.set_from_form(f)
+		new_entry.id=self.newtradeid()
+		self.Trade.add(new_entry)
+		self.handle_tradeoverview()
+		
+	def handle_tradeedit(self):
+		if self.entry_list:
+			index = self.main_view.current()
+			data = self.entry_list[index].get_form()
+		
+			flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+			f = appuifw.Form(data, flags)
+			f.execute()
+			new_entry = TradeEntry()
+			new_entry.id=self.entry_list[index].id
+			new_entry.set_from_form(f)
+			self.Trade.update(new_entry)
+			self.handle_tradeoverview()			
+		
+	def handle_tradedelete(self):
+		if self.entry_list:
+			index = self.main_view.current()
+		if appuifw.query(u"Delete entry?", 'query'):
+			self.Trade.delete(self.entry_list[index])
+			self.handle_tradeoverview()	
+		
+	def handle_tradeoverview(self):
+		self.main_view = appuifw.Listbox([(u"Loading...", u"")],self.handle_view_entry)
+		appuifw.app.body = self.main_view
+		self.entry_list = self.Trade.get_all_entries()
+		if not self.entry_list:
+			content = [(u"(Empty)", u"")]
+		else:
+			content = [(unicode(str(item.id)),item.code) for item in self.entry_list]
+		self.main_view.set_list(content)
+		self.show_trademenu()
+					   
 	def handle_stockadd(self):
 		new_entry = StockEntry()
 		data = new_entry.get_form()
@@ -479,7 +795,19 @@ class MsatsApp:
 	def handle_runstop(self):
 		self.timer.cancel()
 		self.stopflag=1
-				
+
+	def newmoneyid(self):
+		id=self.Money.get_max_id()
+		return id+1
+
+	def newtradeid(self):
+		id=self.Trade.get_max_id()
+		return id+1
+	
+	def newstrategyid(self):
+		id=self.Strategy.get_max_id()
+		return id+1
+	
 	def newstrategyid(self):
 		id=self.Strategy.get_max_id()
 		return id+1
