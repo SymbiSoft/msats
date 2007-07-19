@@ -83,13 +83,19 @@ class MoneyEntry:
 			self.type  = 0
 			self.money  = 0.0
 			
+	def float2str(self,i):
+		i='%s'%(float(i))
+		if i[-1]=='0':
+			i=i[:-2]
+		return i
+	
 	def sql_add(self):
-		sql = "INSERT INTO money (id,date,type,money) VALUES (%d,#%s#,%d,%s)"%(self.id,e32db.format_time(self.date),self.type,float2str(self.money))
+		sql = "INSERT INTO money (id,date,type,money) VALUES (%d,#%s#,%d,%s)"%(self.id,e32db.format_time(self.date),self.type,self.float2str(self.money))
 		return unicode(sql)
 
 	def sql_update(self):
 		sql = "update money set date=#%s#,type=%d,money=%s where id=%d"%(
-			e32db.format_time(self.date),self.type,float2str(self.money),self.id)
+			e32db.format_time(self.date),self.type,self.float2str(self.money),self.id)
 		return unicode(sql)
 	
 	def sql_delete(self):
@@ -185,14 +191,20 @@ class TradeEntry:
 			self.price  = 0.0
 			self.num  = 0
 			
+	def float2str(self,i):
+		i='%s'%(float(i))
+		if i[-1]=='0':
+			i=i[:-2]
+		return i
+	
 	def sql_add(self):
 		sql = "INSERT INTO trade (id,date,type,code,price,num) VALUES (%d,#%s#,%d,'%s',%s,%d)"%(
-			self.id,e32db.format_time(self.date),self.type,self.code,float2str(self.price),self.num)
+			self.id,e32db.format_time(self.date),self.type,self.code,self.float2str(self.price),self.num)
 		return unicode(sql)
 
 	def sql_update(self):
 		sql = "update trade set date=#%s#,type=%d,code='%s',price=%s,num=%d where id=%d"%(
-			e32db.format_time(self.date),self.type,self.code,float2str(self.price),self.num,self.id)
+			e32db.format_time(self.date),self.type,self.code,self.float2str(self.price),self.num,self.id)
 		return unicode(sql)
 	
 	def sql_delete(self):
@@ -320,13 +332,19 @@ class Strategy:
 
 	def get_all_codes(self):
 		dbv = e32db.Db_view()
-		dbv.prepare(self.native_db,u"SELECT distinct code from strategy")
+		dbv.prepare(self.native_db,u"SELECT * from strategy ORDER BY id DESC")
 		dbv.first_line()
 		results = []
 		for i in range(dbv.count_line()):
+			distinct=0
 			dbv.get_line()
-			e = dbv[0]
-			results.append(e)
+			e = StrategyEntry(dbv)
+			for code in results:
+				if code==e.code:
+					distinct=1
+					break
+			if distinct==0:
+				results.append(e.code)
 			dbv.next_line()
 		return results
 
@@ -400,14 +418,20 @@ class StrategyEntry:
 			self.downrate  = 0.0
 			self.enableflag  = 0
 			
+	def float2str(self,i):
+		i='%s'%(float(i))
+		if i[-1]=='0':
+			i=i[:-2]
+		return i
+	
 	def sql_add(self):
 		sql = "INSERT INTO strategy (id,code,type,startprice,uprate,downrate,enableflag) VALUES (%d,'%s',%d,%s,%s,%s,%d)"%(
-			self.id,self.code,self.type,float2str(self.startprice),float2str(self.uprate),float2str(self.downrate),self.enableflag)
+			self.id,self.code,self.type,self.float2str(self.startprice),self.float2str(self.uprate),self.float2str(self.downrate),self.enableflag)
 		return unicode(sql)
 
 	def sql_update(self):
 		sql = "update strategy set code='%s',type=%d,startprice=%s,uprate=%s,downrate=%s,enableflag=%d where id=%d"%(
-			self.code,self.type,float2str(self.startprice),float2str(self.uprate),float2str(self.downrate),self.enableflag,self.id)
+			self.code,self.type,self.float2str(self.startprice),self.float2str(self.uprate),self.float2str(self.downrate),self.enableflag,self.id)
 		return unicode(sql)
 	
 	def sql_delete(self):
@@ -522,8 +546,8 @@ class MsatsApp:
 		if index == 2:
 			self.money()
 
-	def float2str(i):
-		i='%s'float(i)
+	def float2str(self,i):
+		i='%s'%(float(i))
 		if i[-1]=='0':
 			i=i[:-2]
 		return i
@@ -762,8 +786,8 @@ class MsatsApp:
 			
 			for code in codelist:
 				self.textinfo(self.LogText,0x004000,code)
-					if self.stopflag==1:
-						break				
+				if self.stopflag==1:
+					break				
 				try:
 					data=self.getstock(code)
 				except:
@@ -784,41 +808,41 @@ class MsatsApp:
 						startprice=float(j.startprice)
 						uprate=float(j.uprate)
 						downrate=float(j.uprate)	
-						self.textinfo(self.LogText,0x004000,"    now price:%s;yesterday price:%s"%(float2str(nowprice),float2str(yesterdayprice)))
+						self.textinfo(self.LogText,0x004000,"    now price:%s;yesterday price:%s"%(self.float2str(nowprice),self.float2str(yesterdayprice)))
 						if int(j.type)==0:
 							sellprice=startprice*(1+uprate)
-							self.textinfo(self.LogText,0x004000,"    you want to sell it after the start price:%s*(1+%s)=%s"%(float2str(startprice),float2str(uprate),float2str(sellprice)))
+							self.textinfo(self.LogText,0x004000,"    you want to sell it after the start price:%s*(1+%s)=%s"%(self.float2str(startprice),self.float2str(uprate),self.float2str(sellprice)))
 							if nowprice>=sellprice:
 								self.textinfo(self.LogText,0x004000,"    you can sell it now")
 								self.textinfo(self.AlertText,0x004000,self.mynowtime())
-								self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %s"%(j.code,float2str(nowprice)))
+								self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %s"%(j.code,self.float2str(nowprice)))
 								self.playsound()
 								self.Strategy.disable(j)
 						if int(j.type)==1:
 							buyprice=startprice*(1-downrate)
-							self.textinfo(self.LogText,0x004000,"    you want to buy it after the start price:%s*(1-%s)=%s"%(float2str(startprice),float2str(downrate),float2str(buyprice)))
+							self.textinfo(self.LogText,0x004000,"    you want to buy it after the start price:%s*(1-%s)=%s"%(self.float2str(startprice),self.float2str(downrate),self.float2str(buyprice)))
 							if nowprice<=buyprice:
 								self.textinfo(self.LogText,0x004000,"    you can buy it now")
 								self.textinfo(self.AlertText,0x004000,self.mynowtime())
-								self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %s"%(j.code,float2str(nowprice)))
+								self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %s"%(j.code,self.float2str(nowprice)))
 								self.playsound()
 								self.Strategy.disable(j)	
 						if int(j.type)==2:
 							sellprice=yesterdayprice*(1+uprate)
-							self.textinfo(self.LogText,0x004000,"    you want to sell it after the yesterday price:%s*(1+%s)=%s"%(float2str(yesterdayprice),float2str(uprate),float2str(sellprice)))
+							self.textinfo(self.LogText,0x004000,"    you want to sell it after the yesterday price:%s*(1+%s)=%s"%(self.float2str(yesterdayprice),self.float2str(uprate),self.float2str(sellprice)))
 							if nowprice>=sellprice:
 								self.textinfo(self.LogText,0x004000,"    you can sell it now")
 								self.textinfo(self.AlertText,0x004000,self.mynowtime())
-								self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %s"%(j.code,float2str(nowprice)))
+								self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %s"%(j.code,self.float2str(nowprice)))
 								self.playsound()
 								self.Strategy.disable(j)	
 						if int(j.type)==3:
 							buyprice=yesterdayprice*(1-downrate)
-							self.textinfo(self.LogText,0x004000,"    you want to buy it after the yesterday price:%s*(1-%s)=%s"%(float2str(yesterdayprice),float2str(downrate),float2str(buyprice)))
+							self.textinfo(self.LogText,0x004000,"    you want to buy it after the yesterday price:%s*(1-%s)=%s"%(self.float2str(yesterdayprice),self.float2str(downrate),self.float2str(buyprice)))
 							if nowprice<=buyprice:
 								self.textinfo(self.LogText,0x004000,"    you can buy it now")
 								self.textinfo(self.AlertText,0x004000,self.mynowtime())
-								self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %s"%(j.code,float2str(nowprice)))
+								self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %s"%(j.code,self.float2str(nowprice)))
 								self.playsound()	
 								self.Strategy.disable(j)
 			if self.stopflag!=1:				
