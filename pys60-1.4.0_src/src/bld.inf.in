@@ -1,0 +1,67 @@
+PRJ_PLATFORMS
+
+PRJ_MMPFILES
+
+${{if S60_VERSION>=30
+core\core.mmp
+app\app.mmp
+appui\appui.mmp
+gnumakefile app\icons_aif.mk
+exe\python_launcher.mmp
+ext\calendar\calendar.mmp
+ext\camera\camera.mmp
+ext\contacts\contacts.mmp
+ext\e32db\e32db.mmp
+ext\graphics\graphics.mmp
+ext\inbox\inbox.mmp
+ext\keycapture\keycapture.mmp
+ext\gles\gles.mmp
+ext\glcanvas\glcanvas.mmp
+ext\gps\gps.mmp
+${{if WITH_LOCATION_MODULE
+ext\location\location.mmp
+}}
+${{if WITH_MESSAGING_MODULE
+ext\messaging\messaging.mmp
+}}
+ext\recorder\recorder.mmp
+ext\socket\e32socket.mmp
+ext\sysinfo\sysinfo.mmp
+ext\telephone\telephone.mmp
+ext\topwindow\topwindow.mmp
+ext\zlib\zlibmodule.mmp
+$else
+core\core.mmp
+appui\appui.mmp
+app\app.mmp
+${{if S60_VERSION>=26
+ext\gles\gles.mmp
+ext\glcanvas\glcanvas.mmp
+ext\gps\gps.mmp
+gnumakefile app\icons_aif.mk 
+}}
+appmgr\appmgr.mmp
+exe\python_launcher.mmp
+ext\calendar\calendar.mmp
+${{if S60_VERSION>12
+ext\camera\camera.mmp
+}}
+ext\contacts\contacts.mmp
+ext\e32db\e32db.mmp
+ext\graphics\graphics.mmp
+ext\inbox\inbox.mmp
+ext\keycapture\keycapture.mmp
+${{if WITH_LOCATION_MODULE
+ext\location\location.mmp
+}}
+${{if WITH_MESSAGING_MODULE
+ext\messaging\messaging.mmp
+}}
+ext\recorder\recorder.mmp
+ext\socket\e32socket.mmp
+ext\sysinfo\sysinfo.mmp
+ext\telephone\telephone.mmp
+ext\topwindow\topwindow.mmp
+ext\zlib\zlibmodule.mmp
+recog\pyrecog.mmp
+}}

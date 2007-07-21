@@ -1,0 +1,5 @@
+EXPORTS
+	_Z24ImplementationGroupProxyRi @ 1 NONAME ; CODE
+	_ZTI16CApaPyRecognizer @ 2 NONAME ; DATA
+	_ZTV16CApaPyRecognizer @ 3 NONAME ; DATA
+
