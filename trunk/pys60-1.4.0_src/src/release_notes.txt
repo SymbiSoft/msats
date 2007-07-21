@@ -1,0 +1,704 @@
+==============================================
+Python for S60 1.4.0 RELEASE NOTES, 04.07.2007
+==============================================
+
+Product Description
+===================
+
+Python for S60 (hereafter PyS60) is intended for developers looking to create 
+programs that use the native features and resources of the S60 phones, using the 
+Python programming language.
+
+About this release
+==================
+
+This release is meant for S60 2nd edition and 3rd Edition devices. 
+
+For an overview of how the Symbian platform security enhancements affect PyS60, 
+please see 'PyS60_3rdEd_README.txt'.
+
+Note on versioning: The versioning scheme in PyS60 releases is such that 
+releases with an even minor version (1.0.x, 1.2.x ...) are "stable" and releases 
+with an odd minor version (1.1.x, 1.3.x ...) are "development" releases. This
+is thus a stable release.
+
+Feedback
+========
+
+General feedback and discussion should be posted in the Python for S60 
+discussion board at Forum Nokia: 
+http://discussion.forum.nokia.com/forum/forumdisplay.php?f=102
+
+Bug reports should be filed in the SourceForge bug tracking system at: 
+http://sourceforge.net/tracker/?group_id=154155&atid=790646
+
+Bug fixes are naturally also welcomed. The preferred way to submit them is via 
+the patch manager at SourceForge: 
+http://sourceforge.net/tracker/?group_id=154155&atid=790648
+
+At this point we are only accepting code contributions that are licensed under 
+the Apache 2.0 license. Please include an explicit note that your contribution 
+is licensed under the Apache 2.0 license.
+
+Code contributors
+=================
+
+* Ian Morgan (iemorgan@users.sourceforge.net) has provided a patch for adding 
+  read/unread status to Inbox module.
+
+* Simo Salminen (ssalminen@users.sourceforge.net) provided add-on to Form module, 
+  that sets the first line in the first page to active.
+
+Known issues
+============
+
+Here is a summary of the known issues that affect this release. 
+
+To see in more detail the original discussion related to these issues
+in the SourceForge bug tracking system, go to:
+
+  http://sourceforge.net/tracker/?group_id=154155&atid=790646
+
+set the search parameters to:
+
+  Assignee: Any
+  Status: Any
+  Category: Any
+  Group: wont-fix-for-1.4
+
+and click Browse.
+
+1446276   236:re-installation problem
+
+  - In very rare circumstances the upgrade of an existing PyS60
+    installation may fail.  In case you have problems with upgrading
+    your installation, uninstall the previous PyS60 before installing
+    the new one, and notify us of the problem.
+
+1446345   179: audio: midi playing error on 6670
+
+  - S60 2nd edition FP1 has problems playing some sound files. No
+    workaround known.
+
+1446347   245: time.strftime %y format works incorrectly
+
+  - Several of the time.strftime format specifiers work in a
+    nonstandard way. This is due to shortcomings of the underlying
+    Symbian C stdlib libraries.
+
+1446349 	170: contacts export_vcards() label character encoding
+
+  - Contact field labels that contain non-ascii characters may be
+    encoded incorrectly.
+
+1446351   227: socket.gethostbyname('localhost') inconsistencies
+
+  - This call returns inconsistent results on different S60 platforms
+    and depending on the state, and should not be relied on.
+
+1446355   225: Some dialogs do not span full screen
+ 
+  - The appuifw.selection_list doesn't cover the whole screen area
+    when using screen modes 'large' and 'full'.
+
+1446356   222: Wireless Keyboard application + appuifw tabs
+
+  - UI tabs may disappear on a 6600 when the Wireless Keyboard
+    application is installed. They still work - they are just visually
+    invisible. Hasn't been found to occur elsewhere.
+
+1446361   217: socket module raises wrong error on SSL errors
+
+  - Many of the exceptions raised by SSL related operations are
+    nonstandard, and this may require changes in some code. The
+    httplib shipped with PyS60 has been modified to cope with these
+    differences.
+
+1446366   265: Default value for float in \'Form\' and \'query\' fails
+
+  - Setting a default value for a float item in a Form does not work
+    in pre-3rd edition phones.
+
+1446377   271: service names returned by bt_discover end with NULs
+
+  - The service names returned by the native side may have an
+    unnecessary NUL character at the end with some Bluetooth stacks,
+    such as WIDCOMM or Toshiba. It remains unclear if this is a defect
+    in those Bluetooth stacks, S60 Bluetooth stack or PyS60.
+
+1446381   274: Adding combobox dynamically causes interpreter to crash
+
+  - It is not possible to add a combobox dynamically into a Form. 
+    Attempting this will cause a crash.
+
+1446383   275: Form view corrupted when using long text with combo
+
+  - There may be visual anomalies when using long text fields in
+    comboboxes of a Form, on pre-3rd edition phones. A workaround is
+    to use the FFormDoubleSpaced mode.
+
+1446389   137: no error displayed if startup fails due to low memory
+  
+ - If there is insufficient memory to initialize the Python
+   interpreter, the startup of a Python application may abort without
+   any error message.
+
+1446397   141: String vs Unicode in APIs
+  
+ - Some APIs expect Unicode strings, some plain strings, and there are
+   cases where erroneous input does not raise an exception but
+   silently causes bad results. The programmer should carefully check
+   the API documents to see what type is expected by each function.
+
+1446401   131: floating point formatting is nonstandard in many ways
+
+  - The Symbian C stdlib is far from complete. Pending a better
+    formatting subsystem to be integrated in the future.
+
+1446403   109: Import is case-insensitive
+
+  - The standard Python assumes module names are case sensitive, but
+    Symbian's filesystem isn't case sensitive.
+
+1458010   signal&battery bars disappear in certain standalone apps
+
+  - If the main program of an application immediately enters a nested
+  scheduler, some adverse effects may appear, such as disappearing
+  signal and battery bars or the application disappearing from the
+  task list. A workaround is to start the application main loop with
+  the code e32.ao_sleep(0, mainloop)
+
+1540691   Crash using BT socket and keypad
+
+  - This is a part of a class of problems that occurs when
+    long-running operations are executed in callbacks. These problems
+    can be avoided by ensuring callbacks complete quickly.
+
+1542568   System error -50 if key callback raises
+
+  - The message "System error -50" is displayed if a callback raises
+    an exception. Callbacks should not raise exceptions - they should
+    be caught and handled inside callback code.
+
+1574447   os.unlink raises bad type
+1574451   os.rmdir functions raises bad error type
+1582655   os.stat non-posix error (was: os.stat error for c:/private)
+
+  - The exceptions raised by os.unlink, os.rmdir and os.stat may have
+    different error codes than standard POSIX specifies.
+
+1574701   Orientation switch doesn't work if keycapture is active
+
+  - This symptom appears on the E70.
+
+1584445   connection refused when BT is off
+
+  - If BT is deactivated, connection requests via BT will fail. There
+    is currently no way to detect if BT is on from Python. Calling a
+    BT discovery function will prompt the user if they want to turn BT
+    on, though.
+
+1609335   bt_obex_discover() error 2 if target advertises no services
+
+  - socket.bt_obex_discover() will raise an error if the target doesn't
+   advertise any services of the proper type.
+
+1611840   sysinfo.sw_version broken in N80
+
+  - The function sysinfo.sw_version() doesn't work on the N80.  See
+    KIS000450 in the Forum Nokia Technical Library.
+
+1659681   simplecube.py crashes when changing screen mode
+
+   - Due to a platform bug, switching the screen mode while an OpenGL
+     ES app is running may cause a crash on some platform versions.
+
+1683696   Content_handler and .html: cannot go back
+1683698   Content_handler: IOError on file after opening it
+1683708   Content_handler: open_standalone does not work
+
+  - Starting a web browser via the content handler is experimental and
+    has numerous problems. See the bug descriptions for details.
+
+1685270   time.time() & time.ctime() return wrong time
+
+  - In pre-3rd edition emulators time.time() and time.ctime() return
+    incorrect values.
+
+1691649   pyrepl crashes with non-ASCII characters
+
+  - The pyrepl library is unable to handle non-ASCII input and will
+    raise an exception if provided with such.
+
+1692171   Python Bluetooth Problem: recv not working for S60 N91 phone
+
+  - The Bluetooth subsystem may have problems interoperating with some
+    devices.
+
+1701445   e32dbm raises incorrect exception if unicode object given
+
+  - When giving a unicode to e32dbm the raised exception is
+    UnicodeError instead of TypeError.
+
+1702913   socket.accept still blocks with socket.setblocking(0) set
+
+  - socket.setblocking() call only affects .recv, not other methods.
+
+1705881   multithreaded HTTPConnection crash
+
+  - Access point manipulation concurrently in several threads may lead
+    to a crash.
+
+1716095   File object corruption
+
+  - In rare situations, a certain sequence of .seek() and .read() calls
+    may lead to reading of incorrect data from the file. This appears
+    to be a bug in the underlying C stdlib implementation. No
+    workaround.
+
+1722943   float->long-conversion differs in pys60 from i386 python
+
+  - The precision of conversions between floats and longs is different
+    in PyS60 and Python on other platforms. This is in part due to
+    fundamental accuracy problems in floating point arithmetic, and in
+    part due to poor native implementations on this platform. The
+    programmer should be aware of this.
+
+1737827   Form() "combo" field doesn't pop-up properly
+
+ - Combo boxes in Form don't work properly in S60 2.0
+  
+
+Changes to standard library modules:
+====================================
+
+- Docstrings, comments, and test suites have been stripped or abbreviated in all 
+modules to save space.
+
+- anydbm.py, whichdbm.py: Support for e32dbm has been added.
+
+- mimetools.py: Functions that are impossible to implement (like popen) or 
+depend on nonsupported modules (like random) have been omitted.
+
+- ntpath.py: Functions that are inapplicable on the platform, such as 
+expanduser, abspath and so on, have been omitted.
+
+- os.py: 
+  - Functions that are not supported by the platform (such as
+  exec*, spawn*, fork, popen) have been omitted.
+  - Function utime exists, but is a no-op stub.
+
+- quopri.py: Support for running the module as a script has been removed.
+
+- select.py: The only supported use case is selecting for read from
+socket objects.
+
+- shutil.py: Several functions have been omitted to save space or because of 
+missing platform functionality.
+
+- site.py: Simplified and customized for the platform. help() built-in support 
+removed, because the pydoc module is not available and very few docstrings 
+remain in the library modules.
+
+- socket.py: Adapted to work with the native sockets on the platform.
+
+  - getservbyname and getaddrinfo consult a small fixed table instead of an 
+  external service map file. Only few services are supported.
+
+- urllib.py: Proxy settings are loaded from the environment variables, not the 
+phone access point configuration.
+
+- urlparse.py: Only basic functionality is provided.
+
+- time.py: Module attributes are not supported fully.
+
+
+Change history
+==============
+
+Changes in 1.4.0 from 1.4.0rc1:
+-----------------------------
+
+* Release notes updated to mention some feature additions done between
+  1.3.22 and 1.3.23
+
+* The release is officially Nokia signed.
+
+Corrected defects:
+
+1740751: ssl socket read hangs/ returns garbage depending on length
+
+
+Changes in 1.4.0rc1 from 1.3.23:
+-----------------------------
+
+* Feature addition: outbox, sent and drafts folder access to inbox
+
+* Feature addition for 3rd edition: screen orientation change
+
+Corrected defects:
+
+1738606: Formatting float depends on locale, but no module "loc
+1741993: Pieslice and arc not drawn correctly
+
+
+Changes in 1.3.23 from 1.3.22:
+-----------------------------
+
+* messaging.sms_send() now supports an optional callback argument
+
+* camera.release() function added
+
+* JPEG_Exif and JPEG_JFIF image formats added to the camera module
+
+* the script shell now runs scripts in a clean namespace. Previously
+  the namespace contained some default imports such as appuifw and
+  e32, and this caused problems when moving the script to the py2sis
+  environment where these default imports were missing. This change
+  can break old scripts that erroneously did not import all the
+  modules they used.
+
+Corrected defects:
+
+1446275: 231:time.sleep fails for >=2148 second sleep
+1446358: 209: camera does not release reserved resources
+1446366: 265: Default value for float in \'Form\' and \'query\' fails --- query part fixed
+1446394: 148: cursor sometimes shows even if Text widget is invisible
+1458751: e32.ao_calllgate is not reference counted properly?
+1518123: Sound.play() blocks unexpectedly
+1518165: e32.ao_callgate()() does nothing
+1536692: raw_input fails with in-phone interactive console
+1564913: BT console info instead exception
+1576425  UI : white line at bottom of listbox
+1576473: re straightforward recursive segfault
+1584272: calendar: repeat setting not stored for N73
+1616703: gsm_location and signal leak memory on 2nd edition builds
+1653058: GLES examples crash on emulator with 352x416 resolution
+1721132: urllib uses missing getpass
+1723289: e32.ao_callgate drops kwargs
+1726796: camera.image_sizes() dosen't return complete list
+1730693: buildconfig.h missing from 1.3.22 sdk build
+1731420: Script shell environment differs from py2sis environment.
+1732055: Crash on 1.3.22 when creating CSPyInterpreter several times
+1732976: zipfile lib no longer work in 1.3.22
+1733414: Text() uses default formatting if text entered on a new line
+1734542: endless exception (can't call str)
+1735641: copy/paste fails with multiple Text()s
+1736375: alarm time returned incorrectly
+1740007: gethostbyname(u' ') crashes
+
+In addition, the confusing behaviour of a few functions has been described better in the documentation:
+
+1446409: 046: misleading error when sending SMS in offline mode --- the behaviour was documented so it's not so confusing
+1469096: Using camera right after (re)boot --- behaviour documented
+
+Changes in 1.3.22 from 1.3.21:
+-----------------------------
+
+* Getting device IP address, when attached to network, added to socket module 
+  AP_methods.
+
+* Support for scalable fonts added.
+
+* The device packages for 3rd edition are now compiled with the RVCT compiler for improved performance and smaller code size. Special experimental builds are available for OMAP2420 based phones (such as N93, N93i, N95) with further processor specific optimizations.
+
+* The Pymalloc memory allocator has been backported from Python 2.5.1 and taken into use, resulting in significant performance improvements. A Symbian specific mechanism called "local disconnected chunk" is used to improve freeing of memory back to the OS. 
+
+Corrected defects:
+
+1446365: 264: Form field \"number\" should approve non-integer types
+1480463: listbox texts don\'t filter \\t (tab) character
+1518813: I3479: Text primitive doesn\'t work in 3rd ed
+1584269: calendar: \'end\' time of repeat rounding problem
+1676895: Anniversary bug
+1679821: Repeating calendar events occur at the wrong time
+1716115: Python 1.3.21 crash on startup
+1712568: Calendar: alarm for repeating entries is not correctly set
+1728239: Calendar: alarm hour is incorrectly set
+
+Changes in 1.3.21 from 1.3.20:
+-----------------------------
+
+* Improved the field type handling logic in the contacts module. The new code
+  is more efficient and works without enlarging the database, even in the presence
+  of fields with a nonstandard underlying type representation.
+
+* The sending of SMS using different character encodings now also works on 3rd edition.
+  You can specify the encoding using the third parameter to messaging.sms_send.
+
+* The attributes "altzone", "timezone" and "daylight" have been added into the time module
+
+Corrected defects:
+
+1579521: 3rd Ed. Python DLL always loads default.py from the C: drive
+1626582: sms_send() can't deal with CJK characters.
+1673903: time.altzone and time.timezone are missing
+1685270: time.time() & time.ctime() return wrong time
+1687664: Random MemoryError when importing camera module
+1689632: shutil.copy2 - global name 'os' is not defined
+1688600: Symbian DB expansion problem while accessing phonebook
+
+
+Changes in 1.3.20 from 1.3.19:
+-----------------------------
+
+Corrected defects:
+
+1665914: modifying calendar event with long event content field fails
+1649832: contacts.open() is slow on 3rd ed
+1578218: Keycode for the 'camera key'?
+
+Changes in 1.3.19 from 1.3.18:
+-----------------------------
+ 
+ * SMS can be send with different encoding by giving '8bit', '7bit', or 'USC2' 
+   as third parameter to the messaging.sms_send. This works only in pre 3 ed.
+   devices.  
+
+Corrected defects:
+
+1463647: Bottom part of last text row in Text widget is invisible.
+1636644: View finder bug with emulator
+1665017: repeating events from monthly_instances have wrong datetime
+1671691: crash when default_access_point is set and data conn. drops
+1638475: Failing import gives an incorrect error message
+
+Changes in 1.3.18 from 1.3.17:
+-----------------------------
+
+ * Much improved access point selection support - now available 
+   also on 2nd edition devices.
+
+ * Minor documentation updates.
+
+Corrected defects:
+
+1446342: 243: multi_selection_list checkmark style shows strange '1'
+1446360: 259: Modifier codes should be added into key_codes.py
+1455173: can't stop advertising service
+1481966: crash when changing app.body from listbox key handler
+1577901: e32.set_home_time() crashes python
+1584231: The form dialog is misaligned when using multiple items
+1589817: HTTPS-connection hangs
+1597645: time.mktime(time.localtime()) returns bad result
+1604527: recv(-1) crashes Python with USER 30
+1605108: Error with SSL SOCKET
+1616703: Python crashes on repeated calls to gsm_location and signal
+1634318: interpreter crash with repeated calls to camera.start_finder
+1637495: Small bug in Canvas resize callback
+1637733: socket with accespoint information still shows ap dialog
+1641680: Run script fails on unicode file names
+1647781: get() method of anydbm object returns key instead value
+1649893: adding todo entry raises SymbianError KErrArgument -6
+1649943: todo item synchronized from Outlook raises SymbianError
+1653301: keycapture does not incref the callback given"
+
+
+Changes in 1.3.17 from 1.3.16:
+-----------------------------
+
+ * Default access point selection added for S60 3rd edition build.
+ * Documentation for Gles and GLCanvas added
+  
+Corrected defects:
+
+1544601: the new import hook to support calling platsec_import with just one argument.
+1624152: callback not called with ao_sleep
+
+Changes in 1.3.16 from 1.3.15:
+-----------------------------
+
+ * Calendar: has some time truncating issues caused by daylight saving time. 
+ In case the given time is truncated to the start of the day or into the end of the day the 
+ time might be truncated into a slightly wrong datetime value (the datetime value can be an too 
+ less or too great by an hour). This affects to the instance search (start and end times of the 
+ search might be slightly incorrectly set) and to the repeat (repeat start and end might be slightly 
+ incorrect).
+
+
+ * added support for faster "camera" viewfinder (methods "start_finder()" and "stop_finder")
+ * added inactivity timer reset/check to "e32" module (methods "reset_inactivity()" and "inactivity()")
+ * added support for requesting screen layout information from "appuifw" (method "layout()")
+
+
+Corrected defects:
+
+1530868 "Multi_selection_list renders strange icons in the list for p"
+1611315 "opening contacts DB on 2nd FP3"
+
+Changes in 1.3.15 from 1.3.14:
+-----------------------------
+
+ * added access_points() method to socket module that list AP's id's and name that
+ are available.
+ * apid can be given as a paremeter for creating socket object, so that it will not 
+ popup access point selection list when connection will be made.
+ socket(family, type, proto=0, apid=0):
+
+Corrected defects:
+
+1599203: "No codec search functions registered"
+1446359: bt_console.py does not handle UnicodeError
+1544601: ASCII decoding error in e32dbm
+1481937: crash when calling set_list on graphical listbox
+1446275: time.sleep(),e32.ao_sleep fail for >=2148 seconds sleep
+1446364: socket.recv() on UDP socket returns too much data
+1595162: N70 front camera not taking picture
+1599704: calendar: default db opening if no contact added
+
+Changes in 1.3.14 from 1.3.13:
+-----------------------------
+ 
+ * Added method "say" to module 'audio'. This method gives access to device's text-to-speech 
+ engine. The implementation is inspired by Artem Marchenko 
+ (see http://blogs.forum.nokia.com/view_entry.html?id=126 for more information).
+ * Added 'GLES' extension. OpenGL ES 1.0 module ported to PyS60. There are two examples 
+ included in PyS60 SDK, simplecube.py and gles_demo.py.
+ Known issues: 
+    -Examples crash interpreter on 3.0 MR emulator if resolution "Portrait 352x416"is used.
+    -On N80 simplecube.py crashes the interpreter if application screen mode is changed.
+ * Possibility to use compiler RVCT 2.2 build 503 or higher with PyS60.
+  For "setup.py configure" command, there is a new argument, "30armv5", which should be used when 
+  building the SDK with RVCT compiler for ARMV5 target
+ * Initial version of the contacts module for 3.0 has been added.
+    - NOTE: contains lots of bugs. 
+
+Changes in 1.3.13 from 1.3.12:
+-----------------------------
+
+ * Orientation switch added. In canvas, new callback is added to return tuple, 
+ which contains the new rectangle width and height.
+ * Added Ian Morgan's patch that adds flag for read/unread status to the 'Inbox' module
+
+Corrected defects:
+
+1552684: Crashing with multiple threads
+1518817: I3480: Runtime orientation switch doesn't work
+1584585: Incorrect keycapUture.pyd module in 2nd edition
+1587765: Platsec errors trying to write .pycs in emulator
+1571268: sysinfo.signal() returns signalstrength in wrong measure. Fixed
+        according rionpulya's patch
+1584269 calendar: 'end' time of repeat rounding problem 
+        A partial correction to datetime rounding problem has been added. 
+        This not a complete solution, but should work in most cases
+
+Changes in 1.3.12 from 1.3.11:
+-----------------------------
+
+ * calendar module is supported also for 3.0. There are separated modules
+ for <= 2.8 (old) and  3.0 (eka2)
+ * Added text window height calculation to the Text widgets constructor.
+  
+Corrected defects:
+
+1526853: thread.start_new_thread(..) didn't not work on SDK
+1532290: Listbox construction crash
+1542630: Chrash with Ao_timer and key callbacks
+1542607: Crash with recursive Ao_timer
+
+
+Changes in 1.3.11 from 1.3.8:
+-----------------------------
+
+ * The runtime has been split into a separate script shell and runtime part also 
+ for 2nd edition platforms.
+ * Updated 'PYTHON222U.DEF' file which caused building to fail on pre-3rd 
+ edition platforms
+ * New modules 'topwindow' and 'keycapture' added. Note that 'keycapture' will 
+ require the SWEvent capability to function.
+ * Added support for constructing an 'Image' object from an SVG Icon object for 
+ 3rd edition releases.
+
+Corrected defects:
+
+1571936: File 'Python.rsg' was missing which cause py2sis to fail.
+1554589: The script shell no longer installs the 'c:\resource\errrd' file, which 
+was reported to cause installation to fail on some devices.
+1548416: The options menu didn't work in py2sis generated applications
+1536718: The '\python\lib' entries were erroneously added to 'sys.path' as 
+Unicode, which resulted in importing modules from '\python\lib' to not work. 
+Python 2.2 supports only plain strings in sys.path; newer versions understand 
+also Unicode.
+
+(The number in the defects refers to SourceForge defect tracking system)
+
+Changes in 1.3.8 from 1.3.1:
+----------------------------
+
+ * Py2SIS requires that the developer has installed S60 3rd Edition C++ SDK and 
+ that this installation is working. Py2SIS also currently requires that the SDK 
+ configuration is subst'ed, this means that e.g:
+
+    C:\>subst
+    S:\: => C:\Symbian\7.0s\Series60_v20
+    T:\: => C:\Symbian\8.1a\S60_2nd_FP3
+    U:\: => C:\Symbian\8.0a\S60_2nd_FP2
+    V:\: => C:\Symbian\9.1\S60_3rd
+
+ Py2SIS has to exist on the same subst'ed drive as your 3rdEd SDK, in the above 
+ case the correct drive is 'V:'. For more information on py2sis, please see 
+ 'Py2SIS_3rdED_v0_1_README.txt'.
+
+ * 'messaging' extension supports sending MMS messages, the syntax is:
+
+   mms_send(<number>, <msg> [, <attachment>])
+
+ where attachment can be a path to e.g a picture.
+
+ * 'appuifw.app.uid()'
+
+    Returns the UID, in Unicode, of the native application in whose context the 
+    current Python interpreter session runs.
+
+ * PyS60 now uses the official Python logo, with permission from the PSF.
+
+ * The distribution has been split into two SIS packages: PythonForS60
+   and PythonScriptShell. You will need to install them both to get
+   the same functionality as in the pre-3rd edition PyS60.
+
+ * The script shell "Run script" function searches for Python scripts
+  to run in the directories c:\python and e:\python. You can place
+  any scripts you wish to run in one of these directories. The script
+  shell will add the directories c:\python\lib and e:\python\lib into
+  sys.path, if they exist. You can place any library modules you wish
+  to use in one of these directories. To access these directories,
+  you can use e.g. the Nokia PC Suite, a memory card reader or a file
+  manager.
+
+Unsupported features and changes in extensions
+----------------------------------------------
+
+ * The recognizer-appmgr framework that is e.g. responsible for installing 
+ scripts from the device inbox to the Python script shell application folder is 
+ currently not supported in 3rd edition.  This means that all the scripts that 
+ a developer intends to execute via the script shell application need to be installed to 
+ 'c:\python' or 'e:\python' via some other means.
+
+ * 'sysinfo.max_ramdrive_size()' is not supported.
+
+ * OBEX server functionality is not supported in 'socket' (the server cannot 
+ receive data).
+ 
+ * 'location.gsm_location()' returns 'None' instead of tuple if the
+  location information is not relevant. Note that this module
+  requires the capabilities ReadDeviceData, ReadUserData and Location
+  to function.
+
+ * 'e32.start_exe()' takes the executable as a first parameter. The second 
+ parameter takes the commandline parameters to the executable.
+
+ * To open other than the default contacts database a drive letter must be given. Example: 
+
+   contacts.open("c:test_db",'n')
+
+  Note that the database is always created if it does not exist. In other words, 
+
+   contacts.open("c:test_db") 
+
+  is equal to:
+
+   contacts.open("c:test_db", 'c')
+
+
+Copyright (c) 2004-2007 Nokia Corporation. Nokia and Nokia Connecting People are 
+registered trademarks of Nokia Corporation.

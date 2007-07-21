@@ -1,0 +1,4 @@
+EXPORTS
+	_Z19CreateAmarettoAppUii @ 1 NONAME ; CODE
+	_ZN14CAmarettoAppUi10RunScriptLERK7TDesC16PS1_ @ 2 NONAME ; CODE
+

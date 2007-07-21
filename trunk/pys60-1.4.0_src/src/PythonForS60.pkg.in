@@ -1,0 +1,392 @@
+; Copyright (c) 2005 - 2007 Nokia Corporation
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+; Installation file for Python for Series 60
+;
+;Languages
+&EN
+;
+; UID is the app's UID
+;
+#{"Python for S60"},(${{PYS60_UID_S60}}),${{PYS60_VERSION_MAJOR}},${{PYS60_VERSION_MINOR}},${{PYS60_VERSION_MICRO}},TYPE=SISAPP
+
+${{if S60_VERSION>=30
+;Localised Vendor name
+%{"Vendor-EN"}
+}}
+
+${{if S60_VERSION>=30
+[${{S60_REQUIRED_PLATFORM_UID}}], 0, 0, 0, {"Series60ProductID"}
+$else
+(${{S60_REQUIRED_PLATFORM_UID}}), 0, 0, 0, {"Series60ProductID"}
+}}
+
+${{if S60_VERSION>12
+; Embeds Python for Symbian OS
+;@"${{SRC_DIR}}\core\PythonForSymbianOS.SIS",(${{PYS60_UID_CORE}})
+}}
+
+; Files to install
+;
+${{if S60_VERSION>=30
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\Python_appui.dll"     -"!:\sys\bin\python_appui.dll"
+$else
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\Python_appui.dll"     -"!:\system\libs\python_appui.dll"
+}}
+
+${{if S60_VERSION==12
+  "\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\appuifwmodule.rsc"    -"C:\system\data\appuifwmodule.rsc"
+  IF exists("E:\system") 
+  "\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\appuifwmodule.rsc"    -"E:\system\data\appuifwmodule.rsc"
+  ENDIF
+$elif S60_VERSION<30
+  "\Epoc32\data\z\system\data\appuifwmodule.rsc"   -"C:\system\data\appuifwmodule.rsc"
+  IF exists("E:\system") 
+  "\Epoc32\data\z\system\data\appuifwmodule.rsc"   -"E:\system\data\appuifwmodule.rsc"
+  ENDIF
+$else
+  "\Epoc32\data\z\resource\apps\appuifwmodule.rsc"   -"!:\resource\apps\appuifwmodule.rsc"
+}}
+
+; Wrappers and other needed files
+;
+${{if S60_VERSION<30 
+"${{SRC_DIR}}\appui\appuifw\appuifw.py"             	-"!:\system\libs\appuifw.py"
+"${{SRC_DIR}}\core\lib\weakref.py"                  -"!:\system\libs\weakref.py"
+"${{SRC_DIR}}\core\lib\UserDict.py"                 -"!:\system\libs\UserDict.py"
+"${{SRC_DIR}}\ext\graphics\graphics.py"        -"!:\system\libs\graphics.py"
+"${{SRC_DIR}}\ext\contacts\old\contacts.py"        -"!:\system\libs\contacts.py"
+"${{SRC_DIR}}\ext\telephone\telephone.py"	-"!:\system\libs\telephone.py"
+"${{SRC_DIR}}\ext\recorder\audio.py"		-"!:\system\libs\audio.py"
+"${{SRC_DIR}}\ext\keycapture\keycapture.py"		-"!:\system\libs\keycapture.py"
+"${{SRC_DIR}}\ext\topwindow\topwindow.py"		-"!:\system\libs\topwindow.py"
+${{if S60_VERSION>=26 
+"${{SRC_DIR}}\ext\gles\gles_utils.py"		            -"!:\system\libs\gles_utils.py"
+"${{SRC_DIR}}\ext\gps\locationacq.py"		-"!:\system\libs\locationacq.py"
+"${{SRC_DIR}}\ext\gps\positioning.py"		-"!:\system\libs\positioning.py"
+}}
+${{if WITH_LOCATION_MODULE
+"${{SRC_DIR}}\ext\location\location.py"		-"!:\system\libs\location.py"
+}}
+${{if WITH_MESSAGING_MODULE
+"${{SRC_DIR}}\ext\messaging\messaging.py"		-"!:\system\libs\messaging.py"
+}}
+$else
+"${{SRC_DIR}}\appui\appuifw\appuifw.py"             	-"c:\resource\appuifw.py"
+"${{SRC_DIR}}\core\lib\weakref.py"                  -"c:\resource\weakref.py"
+"${{SRC_DIR}}\core\lib\UserDict.py"                 -"c:\resource\UserDict.py"
+"${{SRC_DIR}}\ext\graphics\graphics.py"               -"c:\resource\graphics.py"
+"${{SRC_DIR}}\ext\contacts\eka2\contacts.py"          -"c:\resource\contacts.py"
+"${{SRC_DIR}}\ext\telephone\telephone.py"	            -"c:\resource\telephone.py"
+"${{SRC_DIR}}\ext\recorder\audio.py"		              -"c:\resource\audio.py"
+"${{SRC_DIR}}\ext\keycapture\keycapture.py"		        -"c:\resource\keycapture.py"
+"${{SRC_DIR}}\ext\topwindow\topwindow.py"		          -"c:\resource\topwindow.py"
+"${{SRC_DIR}}\ext\gps\locationacq.py"		          -"c:\resource\locationacq.py"
+"${{SRC_DIR}}\ext\gps\positioning.py"		          -"c:\resource\positioning.py"
+"${{SRC_DIR}}\ext\gles\gles_utils.py"		            -"c:\resource\gles_utils.py"
+${{if WITH_LOCATION_MODULE
+"${{SRC_DIR}}\ext\location\location.py"		            -"c:\resource\location.py"
+}}
+${{if WITH_MESSAGING_MODULE
+"${{SRC_DIR}}\ext\messaging\messaging.py"		          -"c:\resource\messaging.py"
+}}
+}}
+
+${{if S60_VERSION==12
+; Camera not supported
+$elif S60_VERSION<30
+  "${{SRC_DIR}}\ext\camera\camera.py"		-"!:\system\libs\camera.py"
+$else
+  "${{SRC_DIR}}\ext\camera\camera.py"		-"c:\resource\camera.py"
+}}
+
+${{if S60_VERSION<30 
+"${{SRC_DIR}}\ext\sysinfo\sysinfo.py"		-"!:\system\libs\sysinfo.py"
+"${{SRC_DIR}}\ext\calendar\old\calendar.py"	-"!:\system\libs\calendar.py"
+"${{SRC_DIR}}\ext\socket\socket.py"		-"!:\system\libs\socket.py"
+"${{SRC_DIR}}\ext\socket\select.py"		-"!:\system\libs\select.py"
+$else
+"${{SRC_DIR}}\ext\sysinfo\sysinfo.py"		-"c:\resource\sysinfo.py"
+"${{SRC_DIR}}\ext\calendar\eka2\calendar.py"	-"c:\resource\calendar.py"
+"${{SRC_DIR}}\ext\socket\socket.py"		  -"c:\resource\socket.py"
+"${{SRC_DIR}}\ext\socket\select.py"		  -"c:\resource\select.py"
+}}
+
+;
+; Server script launchpad
+; 
+${{if S60_VERSION<30
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\Python_launcher.exe"  -"!:\system\programs\python_launcher.exe"
+$else
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\Python_launcher.exe"  -"!:\sys\bin\python_launcher.exe"
+}}
+
+;
+; PYDs
+;
+${{if S60_VERSION<30 
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\e32db.pyd"           -"!:\system\libs\e32db.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\e32socket.pyd"       -"!:\system\libs\e32socket.pyd"
+${{if WITH_MESSAGING_MODULE
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_messaging.pyd"       -"!:\system\libs\_messaging.pyd"
+}}
+${{if WITH_LOCATION_MODULE
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_location.pyd"        -"!:\system\libs\_location.pyd"
+}}
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_contacts.pyd"       -"!:\system\libs\_contacts.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_sysinfo.pyd"        -"!:\system\libs\_sysinfo.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\zlib.pyd"       	-"!:\system\libs\zlib.pyd"
+${{if S60_VERSION>12
+  "\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_camera.pyd"       	-"!:\system\libs\_camera.pyd"
+}}
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_graphics.pyd"       -"!:\system\libs\_graphics.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_telephone.pyd"      -"!:\system\libs\_telephone.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_recorder.pyd"      	-"!:\system\libs\_recorder.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_calendar.pyd"      	-"!:\system\libs\_calendar.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\inbox.pyd"      	-"!:\system\libs\inbox.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_keycapture.pyd"      	-"!:\system\libs\_keycapture.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_topwindow.pyd"      	-"!:\system\libs\_topwindow.pyd"
+${{if S60_VERSION>=26
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\gles.pyd"              -"!:\system\libs\gles.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\glcanvas.pyd"      	-"!:\system\libs\glcanvas.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_locationacq.pyd"      	-"!:\system\libs\_locationacq.pyd"
+}}
+$else
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\e32db.pyd"           -"c:\sys\bin\e32db.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\e32socket.pyd"       -"c:\sys\bin\e32socket.pyd"
+${{if WITH_MESSAGING_MODULE
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_messaging.pyd"       -"c:\sys\bin\_messaging.pyd"
+}}
+${{if WITH_LOCATION_MODULE
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_location.pyd"        -"c:\sys\bin\_location.pyd"
+}}
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_contacts.pyd"       -"c:\sys\bin\_contacts.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_sysinfo.pyd"        -"c:\sys\bin\_sysinfo.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\zlib.pyd"       	-"c:\sys\bin\zlib.pyd"
+${{if S60_VERSION>12
+  "\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_camera.pyd"       	-"c:\sys\bin\_camera.pyd"
+}}
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_graphics.pyd"       -"c:\sys\bin\_graphics.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_telephone.pyd"      -"c:\sys\bin\_telephone.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_recorder.pyd"      	-"c:\sys\bin\_recorder.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_calendar.pyd"      	-"c:\sys\bin\_calendar.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_keycapture.pyd"      -"c:\sys\bin\_keycapture.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_topwindow.pyd"      	-"c:\sys\bin\_topwindow.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\_locationacq.pyd"      	-"c:\sys\bin\_locationacq.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\inbox.pyd"      	-"c:\sys\bin\inbox.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\gles.pyd"     -"c:\sys\bin\gles.pyd"
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\glcanvas.pyd"      	-"c:\sys\bin\glcanvas.pyd"
+}}
+
+${{if S60_VERSION==12
+; Embedded signed SIS files don't work properly on S60 1st Edition, so
+; on that platform we just include the contents of embedded SIS files here.
+
+; Python for Symbian OS files
+
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\Python222.dll"                -"!:\system\libs\python222.dll"
+"${{SRC_DIR}}\core\Lib\btconsole.py"                        -"!:\system\libs\btconsole.py"
+"${{SRC_DIR}}\core\Lib\anydbm.py"                           -"!:\system\libs\anydbm.py"
+"${{SRC_DIR}}\core\Lib\whichdb.py"                          -"!:\system\libs\whichdb.py"
+"${{SRC_DIR}}\core\Lib\e32dbm.py"                           -"!:\system\libs\e32dbm.py"
+"${{SRC_DIR}}\core\Lib\key_codes.py"                        -"!:\system\libs\key_codes.py"
+"${{SRC_DIR}}\core\Lib\os.py"                               -"!:\system\libs\os.py"
+"${{SRC_DIR}}\core\Lib\pack.py"                             -"!:\system\libs\pack.py"
+"${{SRC_DIR}}\core\Lib\ntpath.py"                           -"!:\system\libs\ntpath.py"
+"${{SRC_DIR}}\core\Lib\shutil.py"                           -"!:\system\libs\shutil.py"
+"${{SRC_DIR}}\core\Lib\code.py"                             -"!:\system\libs\code.py"
+"${{SRC_DIR}}\core\Lib\codeop.py"                           -"!:\system\libs\codeop.py"
+"${{SRC_DIR}}\core\Lib\linecache.py"                        -"!:\system\libs\linecache.py"
+"${{SRC_DIR}}\core\Lib\traceback.py"                        -"!:\system\libs\traceback.py"
+"${{SRC_DIR}}\core\Lib\stat.py"                             -"!:\system\libs\stat.py"
+"${{SRC_DIR}}\core\Lib\types.py"                            -"!:\system\libs\types.py"
+"${{SRC_DIR}}\core\Lib\__future__.py"                       -"!:\system\libs\__future__.py"
+"${{SRC_DIR}}\core\Lib\re.py"                               -"!:\system\libs\re.py"
+"${{SRC_DIR}}\core\Lib\sre.py"                              -"!:\system\libs\sre.py"
+"${{SRC_DIR}}\core\Lib\sre_compile.py"                      -"!:\system\libs\sre_compile.py"
+"${{SRC_DIR}}\core\Lib\sre_constants.py"                    -"!:\system\libs\sre_constants.py"
+"${{SRC_DIR}}\core\Lib\sre_parse.py"                        -"!:\system\libs\sre_parse.py"
+"${{SRC_DIR}}\core\Lib\site.py"                             -"!:\system\libs\site.py"
+"${{SRC_DIR}}\core\Lib\codecs.py"                           -"!:\system\libs\codecs.py"
+"${{SRC_DIR}}\core\Lib\atexit.py"                           -"!:\system\libs\atexit.py"
+"${{SRC_DIR}}\core\Lib\base64.py"                           -"!:\system\libs\base64.py"
+"${{SRC_DIR}}\core\Lib\httplib.py"                          -"!:\system\libs\httplib.py"
+"${{SRC_DIR}}\core\Lib\getpass.py"                          -"!:\system\libs\getpass.py"
+"${{SRC_DIR}}\core\Lib\mimetools.py"                        -"!:\system\libs\mimetools.py"
+"${{SRC_DIR}}\core\Lib\quopri.py"                           -"!:\system\libs\quopri.py"
+"${{SRC_DIR}}\core\Lib\rfc822.py"                           -"!:\system\libs\rfc822.py"
+"${{SRC_DIR}}\core\Lib\urlparse.py"                         -"!:\system\libs\urlparse.py"
+"${{SRC_DIR}}\core\Lib\uu.py"                               -"!:\system\libs\uu.py"
+"${{SRC_DIR}}\core\Lib\keyword.py"                          -"!:\system\libs\keyword.py"
+"${{SRC_DIR}}\core\Lib\warnings.py"                         -"!:\system\libs\warnings.py"
+"${{SRC_DIR}}\core\Lib\string.py"                           -"!:\system\libs\string.py"
+"${{SRC_DIR}}\core\Lib\StringIO.py"                         -"!:\system\libs\StringIO.py"
+"${{SRC_DIR}}\core\Lib\whrandom.py"                         -"!:\system\libs\whrandom.py"
+"${{SRC_DIR}}\core\Lib\copy.py"                             -"!:\system\libs\copy.py"
+"${{SRC_DIR}}\core\Lib\repr.py"                             -"!:\system\libs\repr.py"
+"${{SRC_DIR}}\core\Lib\copy_reg.py"                         -"!:\system\libs\copy_reg.py"
+"${{SRC_DIR}}\core\Lib\urllib.py"                           -"!:\system\libs\urllib.py"
+"${{SRC_DIR}}\core\Lib\zipfile.py"                          -"!:\system\libs\zipfile.py"
+"${{SRC_DIR}}\core\Lib\random.py"                           -"!:\system\libs\random.py"
+"${{SRC_DIR}}\core\Lib\encodings\__init__.py"               -"!:\system\libs\encodings\__init__.py"
+"${{SRC_DIR}}\core\Lib\encodings\aliases.py"                -"!:\system\libs\encodings\aliases.py"
+"${{SRC_DIR}}\core\Lib\encodings\ascii.py"                  -"!:\system\libs\encodings\ascii.py"
+"${{SRC_DIR}}\core\Lib\encodings\base64_codec.py"           -"!:\system\libs\encodings\base64_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\charmap.py"                -"!:\system\libs\encodings\charmap.py"
+"${{SRC_DIR}}\core\Lib\encodings\hex_codec.py"              -"!:\system\libs\encodings\hex_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\latin_1.py"                -"!:\system\libs\encodings\latin_1.py"
+"${{SRC_DIR}}\core\Lib\encodings\raw_unicode_escape.py"     -"!:\system\libs\encodings\raw_unicode_escape.py"
+"${{SRC_DIR}}\core\Lib\encodings\unicode_escape.py"         -"!:\system\libs\encodings\unicode_escape.py"
+"${{SRC_DIR}}\core\Lib\encodings\unicode_internal.py"       -"!:\system\libs\encodings\unicode_internal.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16.py"                 -"!:\system\libs\encodings\utf_16.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16_be.py"              -"!:\system\libs\encodings\utf_16_be.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16_le.py"              -"!:\system\libs\encodings\utf_16_le.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_7.py"                  -"!:\system\libs\encodings\utf_7.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_8.py"                  -"!:\system\libs\encodings\utf_8.py"
+"${{SRC_DIR}}\core\Lib\encodings\uu_codec.py"               -"!:\system\libs\encodings\uu_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\zlib_codec.py"             -"!:\system\libs\encodings\zlib_codec.py"
+}}
+
+; Python for Symbian OS files
+${{if S60_VERSION<30
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\Python222.dll"              -"!:\system\libs\python222.dll"
+$else
+"\Epoc32\release\${{DEVICE_PLATFORM}}\${{DEVICE_BUILD}}\Python222.dll"              -"!:\sys\bin\python222.dll"
+}}
+;
+; Library modules
+;
+${{if S60_VERSION<30
+"${{SRC_DIR}}\core\Lib\btconsole.py"                                          -"!:\system\libs\btconsole.py"
+"${{SRC_DIR}}\core\Lib\anydbm.py"                                             -"!:\system\libs\anydbm.py"
+"${{SRC_DIR}}\core\Lib\whichdb.py"                                            -"!:\system\libs\whichdb.py"
+"${{SRC_DIR}}\core\Lib\e32dbm.py"                                             -"!:\system\libs\e32dbm.py"
+"${{SRC_DIR}}\core\Lib\key_codes.py"                                          -"!:\system\libs\key_codes.py"
+"${{SRC_DIR}}\core\Lib\os.py"                                                 -"!:\system\libs\os.py"
+"${{SRC_DIR}}\core\Lib\pack.py"                                               -"!:\system\libs\pack.py"
+"${{SRC_DIR}}\core\Lib\ntpath.py"                                             -"!:\system\libs\ntpath.py"
+"${{SRC_DIR}}\core\Lib\shutil.py"                                             -"!:\system\libs\shutil.py"
+"${{SRC_DIR}}\core\Lib\code.py"                                               -"!:\system\libs\code.py"
+"${{SRC_DIR}}\core\Lib\codeop.py"                                             -"!:\system\libs\codeop.py"
+"${{SRC_DIR}}\core\Lib\linecache.py"                                          -"!:\system\libs\linecache.py"
+"${{SRC_DIR}}\core\Lib\traceback.py"                                          -"!:\system\libs\traceback.py"
+"${{SRC_DIR}}\core\Lib\stat.py"                                               -"!:\system\libs\stat.py"
+"${{SRC_DIR}}\core\Lib\types.py"                                              -"!:\system\libs\types.py"
+"${{SRC_DIR}}\core\Lib\__future__.py"                                         -"!:\system\libs\__future__.py"
+"${{SRC_DIR}}\core\Lib\re.py"                                                 -"!:\system\libs\re.py"
+"${{SRC_DIR}}\core\Lib\sre.py"                                                -"!:\system\libs\sre.py"
+"${{SRC_DIR}}\core\Lib\sre_compile.py"                                        -"!:\system\libs\sre_compile.py"
+"${{SRC_DIR}}\core\Lib\sre_constants.py"                                      -"!:\system\libs\sre_constants.py"
+"${{SRC_DIR}}\core\Lib\sre_parse.py"                                          -"!:\system\libs\sre_parse.py"
+"${{SRC_DIR}}\core\Lib\site.py"                                               -"!:\system\libs\site.py"
+"${{SRC_DIR}}\core\Lib\codecs.py"                                             -"!:\system\libs\codecs.py"
+"${{SRC_DIR}}\core\Lib\atexit.py"                                             -"!:\system\libs\atexit.py"
+"${{SRC_DIR}}\core\Lib\base64.py"                                             -"!:\system\libs\base64.py"
+"${{SRC_DIR}}\core\Lib\httplib.py"                                            -"!:\system\libs\httplib.py"
+"${{SRC_DIR}}\core\Lib\getpass.py"                                            -"!:\system\libs\getpass.py"
+"${{SRC_DIR}}\core\Lib\mimetools.py"                                          -"!:\system\libs\mimetools.py"
+"${{SRC_DIR}}\core\Lib\quopri.py"                                             -"!:\system\libs\quopri.py"
+"${{SRC_DIR}}\core\Lib\rfc822.py"                                             -"!:\system\libs\rfc822.py"
+"${{SRC_DIR}}\core\Lib\urlparse.py"                                           -"!:\system\libs\urlparse.py"
+"${{SRC_DIR}}\core\Lib\uu.py"                                                 -"!:\system\libs\uu.py"
+"${{SRC_DIR}}\core\Lib\keyword.py"                                            -"!:\system\libs\keyword.py"
+"${{SRC_DIR}}\core\Lib\warnings.py"                                           -"!:\system\libs\warnings.py"
+"${{SRC_DIR}}\core\Lib\string.py"                                             -"!:\system\libs\string.py"
+"${{SRC_DIR}}\core\Lib\StringIO.py"                                           -"!:\system\libs\StringIO.py"
+"${{SRC_DIR}}\core\Lib\whrandom.py"                                           -"!:\system\libs\whrandom.py"
+"${{SRC_DIR}}\core\Lib\copy.py"                                               -"!:\system\libs\copy.py"
+"${{SRC_DIR}}\core\Lib\repr.py"                                               -"!:\system\libs\repr.py"
+"${{SRC_DIR}}\core\Lib\copy_reg.py"                                           -"!:\system\libs\copy_reg.py"
+"${{SRC_DIR}}\core\Lib\urllib.py"                                             -"!:\system\libs\urllib.py"
+"${{SRC_DIR}}\core\Lib\zipfile.py"                                            -"!:\system\libs\zipfile.py"
+"${{SRC_DIR}}\core\Lib\random.py"                                             -"!:\system\libs\random.py"
+"${{SRC_DIR}}\core\Lib\encodings\__init__.py"                                 -"!:\system\libs\encodings\__init__.py"
+"${{SRC_DIR}}\core\Lib\encodings\aliases.py"                                  -"!:\system\libs\encodings\aliases.py"
+"${{SRC_DIR}}\core\Lib\encodings\ascii.py"                                    -"!:\system\libs\encodings\ascii.py"
+"${{SRC_DIR}}\core\Lib\encodings\base64_codec.py"                             -"!:\system\libs\encodings\base64_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\charmap.py"                                  -"!:\system\libs\encodings\charmap.py"
+"${{SRC_DIR}}\core\Lib\encodings\hex_codec.py"                                -"!:\system\libs\encodings\hex_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\latin_1.py"                                  -"!:\system\libs\encodings\latin_1.py"
+"${{SRC_DIR}}\core\Lib\encodings\raw_unicode_escape.py"                       -"!:\system\libs\encodings\raw_unicode_escape.py"
+"${{SRC_DIR}}\core\Lib\encodings\unicode_escape.py"                           -"!:\system\libs\encodings\unicode_escape.py"
+"${{SRC_DIR}}\core\Lib\encodings\unicode_internal.py"                         -"!:\system\libs\encodings\unicode_internal.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16.py"                                   -"!:\system\libs\encodings\utf_16.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16_be.py"                                -"!:\system\libs\encodings\utf_16_be.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16_le.py"                                -"!:\system\libs\encodings\utf_16_le.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_7.py"                                    -"!:\system\libs\encodings\utf_7.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_8.py"                                    -"!:\system\libs\encodings\utf_8.py"
+"${{SRC_DIR}}\core\Lib\encodings\uu_codec.py"                                 -"!:\system\libs\encodings\uu_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\zlib_codec.py"                               -"!:\system\libs\encodings\zlib_codec.py"
+$else
+"${{SRC_DIR}}\core\Lib\btconsole.py"                                          -"c:\resource\btconsole.py"
+"${{SRC_DIR}}\core\Lib\anydbm.py"                                             -"c:\resource\anydbm.py"
+"${{SRC_DIR}}\core\Lib\whichdb.py"                                            -"c:\resource\whichdb.py"
+"${{SRC_DIR}}\core\Lib\e32dbm.py"                                             -"c:\resource\e32dbm.py"
+"${{SRC_DIR}}\core\Lib\key_codes.py"                                          -"c:\resource\key_codes.py"
+"${{SRC_DIR}}\core\Lib\os.py"                                                 -"c:\resource\os.py"
+"${{SRC_DIR}}\core\Lib\pack.py"                                               -"c:\resource\pack.py"
+"${{SRC_DIR}}\core\Lib\ntpath.py"                                             -"c:\resource\ntpath.py"
+"${{SRC_DIR}}\core\Lib\shutil.py"                                             -"c:\resource\shutil.py"
+"${{SRC_DIR}}\core\Lib\code.py"                                               -"c:\resource\code.py"
+"${{SRC_DIR}}\core\Lib\codeop.py"                                             -"c:\resource\codeop.py"
+"${{SRC_DIR}}\core\Lib\linecache.py"                                          -"c:\resource\linecache.py"
+"${{SRC_DIR}}\core\Lib\traceback.py"                                          -"c:\resource\traceback.py"
+"${{SRC_DIR}}\core\Lib\stat.py"                                               -"c:\resource\stat.py"
+"${{SRC_DIR}}\core\Lib\types.py"                                              -"c:\resource\types.py"
+"${{SRC_DIR}}\core\Lib\__future__.py"                                         -"c:\resource\__future__.py"
+"${{SRC_DIR}}\core\Lib\re.py"                                                 -"c:\resource\re.py"
+"${{SRC_DIR}}\core\Lib\sre.py"                                                -"c:\resource\sre.py"
+"${{SRC_DIR}}\core\Lib\sre_compile.py"                                        -"c:\resource\sre_compile.py"
+"${{SRC_DIR}}\core\Lib\sre_constants.py"                                      -"c:\resource\sre_constants.py"
+"${{SRC_DIR}}\core\Lib\sre_parse.py"                                          -"c:\resource\sre_parse.py"
+"${{SRC_DIR}}\core\Lib\site.py"                                               -"c:\resource\site.py"
+"${{SRC_DIR}}\core\Lib\codecs.py"                                             -"c:\resource\codecs.py"
+"${{SRC_DIR}}\core\Lib\atexit.py"                                             -"c:\resource\atexit.py"
+"${{SRC_DIR}}\core\Lib\base64.py"                                             -"c:\resource\base64.py"
+"${{SRC_DIR}}\core\Lib\httplib.py"                                            -"c:\resource\httplib.py"
+"${{SRC_DIR}}\core\Lib\getpass.py"                                            -"c:\resource\getpass.py"
+"${{SRC_DIR}}\core\Lib\mimetools.py"                                          -"c:\resource\mimetools.py"
+"${{SRC_DIR}}\core\Lib\quopri.py"                                             -"c:\resource\quopri.py"
+"${{SRC_DIR}}\core\Lib\rfc822.py"                                             -"c:\resource\rfc822.py"
+"${{SRC_DIR}}\core\Lib\urlparse.py"                                           -"c:\resource\urlparse.py"
+"${{SRC_DIR}}\core\Lib\uu.py"                                                 -"c:\resource\uu.py"
+"${{SRC_DIR}}\core\Lib\keyword.py"                                            -"c:\resource\keyword.py"
+"${{SRC_DIR}}\core\Lib\warnings.py"                                           -"c:\resource\warnings.py"
+"${{SRC_DIR}}\core\Lib\string.py"                                             -"c:\resource\string.py"
+"${{SRC_DIR}}\core\Lib\StringIO.py"                                           -"c:\resource\StringIO.py"
+"${{SRC_DIR}}\core\Lib\whrandom.py"                                           -"c:\resource\whrandom.py"
+"${{SRC_DIR}}\core\Lib\copy.py"                                               -"c:\resource\copy.py"
+"${{SRC_DIR}}\core\Lib\repr.py"                                               -"c:\resource\repr.py"
+"${{SRC_DIR}}\core\Lib\copy_reg.py"                                           -"c:\resource\copy_reg.py"
+"${{SRC_DIR}}\core\Lib\urllib.py"                                             -"c:\resource\urllib.py"
+"${{SRC_DIR}}\core\Lib\zipfile.py"                                            -"c:\resource\zipfile.py"
+"${{SRC_DIR}}\core\Lib\random.py"                                             -"c:\resource\random.py"
+"${{SRC_DIR}}\core\Lib\encodings\__init__.py"                                 -"c:\resource\encodings\__init__.py"
+"${{SRC_DIR}}\core\Lib\encodings\aliases.py"                                  -"c:\resource\encodings\aliases.py"
+"${{SRC_DIR}}\core\Lib\encodings\ascii.py"                                    -"c:\resource\encodings\ascii.py"
+"${{SRC_DIR}}\core\Lib\encodings\base64_codec.py"                             -"c:\resource\encodings\base64_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\charmap.py"                                  -"c:\resource\encodings\charmap.py"
+"${{SRC_DIR}}\core\Lib\encodings\hex_codec.py"                                -"c:\resource\encodings\hex_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\latin_1.py"                                  -"c:\resource\encodings\latin_1.py"
+"${{SRC_DIR}}\core\Lib\encodings\raw_unicode_escape.py"                       -"c:\resource\encodings\raw_unicode_escape.py"
+"${{SRC_DIR}}\core\Lib\encodings\unicode_escape.py"                           -"c:\resource\encodings\unicode_escape.py"
+"${{SRC_DIR}}\core\Lib\encodings\unicode_internal.py"                         -"c:\resource\encodings\unicode_internal.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16.py"                                   -"c:\resource\encodings\utf_16.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16_be.py"                                -"c:\resource\encodings\utf_16_be.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_16_le.py"                                -"c:\resource\encodings\utf_16_le.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_7.py"                                    -"c:\resource\encodings\utf_7.py"
+"${{SRC_DIR}}\core\Lib\encodings\utf_8.py"                                    -"c:\resource\encodings\utf_8.py"
+"${{SRC_DIR}}\core\Lib\encodings\uu_codec.py"                                 -"c:\resource\encodings\uu_codec.py"
+"${{SRC_DIR}}\core\Lib\encodings\zlib_codec.py"                               -"c:\resource\encodings\zlib_codec.py"
+}}

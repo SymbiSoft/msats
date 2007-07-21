@@ -1,0 +1,4 @@
+EXPORTS
+	initgraphics @ 1 NONAME ; CODE
+	zfinalizegraphics @ 2 NONAME ; CODE
+

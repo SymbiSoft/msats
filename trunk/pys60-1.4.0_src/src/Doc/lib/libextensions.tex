@@ -1,0 +1,221 @@
+% Copyright (c) 2005 - 2007 Nokia Corporation
+%
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+%
+%     http://www.apache.org/licenses/LICENSE-2.0
+%
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+
+\section{Extensions to Standard Library Modules}
+\label{extensions}
+
+The following standard modules have been extended.
+
+\subsection{\module{thread} ---
+  S60 extensions to standard thread module} 
+\label{subsec:thread}
+
+\declaremodule{extension}{thread}
+\modulesynopsis{S60 extensions to standard thread module.}
+
+The following function has been added to the standard \code{thread} 
+module:
+
+\begin{funcdesc}{ao_waittid}{thread_id}
+
+Synchronizes with the end of the execution of the thread identified by the given 
+\var{thread_id}. The implementation is based on a Symbian OS active object. 
+For the blocking behavior, see Section \ref{subsec:Aolock}, Ao_lock Type.
+
+\end{funcdesc}
+
+\subsection{\module{socket} ---
+  S60 extensions to standard socket module} 
+\label{subsec:socket}
+
+\declaremodule{extension}{socket}
+\modulesynopsis{Extensions to standard socket module.}
+
+Bluetooth (BT) support has been added to the standard \code{socket} 
+module. The following related constants and functions are defined:
+
+\begin{notice}[note]
+In release 1.0 the functions \code{bt_advertise_service}, 
+\code{bt_obex_receive}, and 
+\code{bt_rfcomm_get_available_server_channel} incorrectly 
+expected to be given the internal \code{e32socket.socket} object as the 
+socket parameter instead of the proper \code{socket} object. Now the 
+functions work correctly. The old calling convention is still supported but 
+it is deprecated and may be removed in a future release.
+\end{notice}
+
+\begin{datadesc}{AF_BT}
+
+Represents the Bluetooth address family.
+
+\end{datadesc}
+
+\begin{datadesc}{BTPROTO_RFCOMM}
+
+This constant represents the Bluetooth protocol RFCOMM.
+
+\end{datadesc}
+
+\begin{datadesc}{RFCOMM}
+\end{datadesc}
+\begin{datadesc}{OBEX}
+
+Bluetooth service classes supported by \code{bt_advertise_service}.
+
+\end{datadesc}
+
+\begin{datadesc}{AUTH}
+\end{datadesc}
+\begin{datadesc}{ENCRYPT}
+\end{datadesc}
+\begin{datadesc}{AUTHOR}
+
+Bluetooth security mode flags.
+
+\end{datadesc}
+
+\begin{funcdesc}{bt_advertise_service}{name, socket, flag, class}
+
+Sets a service advertising the service \var{name} (Unicode) on local channel 
+that is bound to \var{socket}. If \var{flag} is \code{True}, the advertising is 
+turned on, otherwise it is turned off. The service class to be advertised is 
+either \code{RFCOMM} or \code{OBEX}.
+
+\end{funcdesc}
+
+\begin{funcdesc}{bt_discover}{\optional{address}}
+
+Performs the Bluetooth device discovery (if the optional BT device address 
+is not given) and the discovery of RFCOMM class services on the chosen 
+device. Returns a pair: BT device address, dictionary of services, where 
+Unicode service name is the key and the corresponding port is the value.
+
+\end{funcdesc}
+
+\begin{funcdesc}{bt_obex_discover}{\optional{address}}
+
+Same as \code{discover}, but for discovery of OBEX class services on the 
+chosen device.
+
+\end{funcdesc}
+
+\begin{funcdesc}{bt_obex_send_file}{address, channel, filename}
+
+Sends file \var{filename} (Unicode) wrapped into an OBEX object 
+to remote \var{address}, \var{channel}.
+
+\end{funcdesc}
+
+\begin{funcdesc}{bt_obex_receive}{socket, filename}
+
+Receives a file as an OBEX object, unwraps and stores it into \var{filename} 
+(Unicode). \var{socket} is a bound \code{OBEX} socket.
+
+\end{funcdesc}
+
+\begin{funcdesc}{bt_rfcomm_get_available_server_channel}{socket}
+
+Returns an available RFCOMM server channel for \var{socket}.
+
+\end{funcdesc}
+
+\begin{funcdesc}{set_security}{socket, mode}
+
+Sets the security level of the given bound \var{socket}. The 
+\var{mode} is an integer flag that is formed using a binary 
+\code{or} operation of one or more of: \code{AUTH} (authentication), 
+\code{ENCRYPT}, \code{AUTHOR} (authorization). Example: 
+\code{set_security(s, AUTH | AUTHOR)}.
+
+\end{funcdesc}
+
+\begin{notice}[note]
+When listening to a Bluetooth socket on the phone, it is necessary to set 
+the security level.
+\end{notice}
+
+\begin{notice}[note]
+SSL is not supported in S60 1st Edition. SSL client certificates are 
+not supported at all.
+\end{notice}
+
+For examples on the usage of these functions, see Programming with Python for 
+S60 Platform \cite{PyS60Prog}.
+
+Setting default Access Point (AP) has been added to the standard \code{socket} 
+module. The following related constants and functions are defined:
+
+\begin{funcdesc}{select_access_point}{}
+This opens popup selection where access points are listed and can be selected.
+Returns selected access point id.
+\end{funcdesc}
+
+\begin{funcdesc}{access_point}{apid}
+This creates access point object by given apid. Returns access point object.
+\end{funcdesc}
+
+\begin{funcdesc}{set_default_access_point}{apo}
+This sets the default access point that is used when socket is opened. Setting 
+\var{apo} to \code{"None"} will clear default access point.
+\end{funcdesc}
+
+\begin{funcdesc}{access_points}{}
+This lists access points id's and names that are available. 
+\end{funcdesc}
+
+Example 1:
+\begin{verbatim}
+#access point is selected from the list
+apid = select_access_point()
+apo = access_point(apid)
+set_default_access_point(apo)
+
+s = socket(AF_INET, SOCK_STREAM)
+print apo.ip()
+s.connect(('www.sourceforge.net',80))
+s.send('GET /\r\n\r\n')
+s.recv(100)
+s.close()
+apo.stop()
+
+\end{verbatim}
+
+Example 2:
+\begin{verbatim}
+#Access point id is already known
+apo = access_point(1)
+set_default_access_point(apo) 
+
+s = socket(AF_INET, SOCK_STREAM)
+s.connect(('www.sourceforge.net',80))
+s.send('GET /\r\n\r\n')
+s.recv(100)
+s.close()
+apo.stop()
+\end{verbatim}
+
+Example 3:
+\begin{verbatim}
+#display interface ip.
+#access point is selected from the list
+apid = select_access_point()
+apo = access_point(apid)
+apo.start()
+#Note that ip-address is given by operator, if static ip-address is not defined,
+#when connection is started
+print apo.ip()
+#When connection is closed dynamic ip-address is released
+apo.stop()
+\end{verbatim}
+

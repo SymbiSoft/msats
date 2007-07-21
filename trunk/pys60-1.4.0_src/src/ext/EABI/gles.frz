@@ -1,0 +1,4 @@
+EXPORTS
+	initgles @ 1 NONAME ; CODE
+	zfinalizegles @ 2 NONAME ; CODE
+
