@@ -1,5 +1,0 @@
-% Copyright (c) 2006-2007 Nokia Corporation
-
-The Python for S60 Platform (Python for S60) simplifies application development 
-and provides a scripting solution for the Symbian C++ APIs. This document is for 
-Python for S60 version ${{PYS60_VERSION}} that is based on Python 2.2.2.

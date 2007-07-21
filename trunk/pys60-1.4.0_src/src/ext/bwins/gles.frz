@@ -1,4 +1,0 @@
-EXPORTS
-	initgles @ 1 NONAME
-	zfinalizegles @ 2 NONAME
-

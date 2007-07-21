@@ -1,4 +1,0 @@
-EXPORTS
-	initglcanvas @ 1 NONAME R3UNUSED ; (null)
-	zfinalizeglcanvas @ 2 NONAME R3UNUSED ; (null)
-
