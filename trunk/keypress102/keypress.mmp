@@ -1,0 +1,17 @@
+
+targettype dll
+TARGET	      keypress.pyd
+TARGETPATH     \system\libs
+
+
+systeminclude \epoc32\include
+systeminclude \epoc32\include\libc
+systeminclude \epoc32\include\python
+
+USERINCLUDE   . 
+
+LIBRARY python222.lib
+LIBRARY euser.lib
+LIBRARY ws32.lib
+
+source		keypress.cpp
