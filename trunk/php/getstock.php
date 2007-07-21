@@ -1,7 +1,7 @@
 <? 
 function getSohuQuote($stockSymbol = "000001") 
 { 
-if (!$targetURL) $targetURL = "http://stock.business.sohu.com/stock_image/realtime_table.php?code=$stockSymbol"; //设定要抓取的URL目标 
+if (!$targetURL) $targetURL = "http://quotes.money.163.com/quote/$stockSymbol.html"; //设定要抓取的URL目标 
 $fd = fopen("$targetURL", "r"); 
 $stopExtract = 0; 
 $startExtract = 0; 
@@ -11,7 +11,7 @@ while (!feof($fd))
 	
 	if (!$startExtract)
 	{
-		if (strstr($buffer, "相关")) 
+		if (strstr($buffer, "成交")) 
 		{ 
 			$startExtract = 1; 
 		}
@@ -22,26 +22,32 @@ while (!feof($fd))
 		$buffer = str_replace("</td>", "|", $buffer); 
 		$buffer = str_replace("&nbsp;", "", $buffer); 
 		$buffer = trim(strip_tags($buffer)); 
-		if (strstr($buffer, "Ｂ")) 
+		if (strstr($buffer, "旧版行情系统")) 
 		{ 
 			$stopExtract = 1; 
-		} 
+		}
 		$capturedHTML .= $buffer; 
 	} 
-	if ($startExtract && strstr($buffer, "Ｂ")) 
+	if ($startExtract && strstr($buffer, "旧版行情系统")) 
 	{ 
 		$stopExtract = 1;
-		$capturedHTML = str_replace("相关", "", $capturedHTML); 
-		$capturedHTML = str_replace("ＫＦＨＴＮＢ||", "", $capturedHTML); 
-		$capturedHTML = str_replace("|Ｋ- Ｋ线走势图Ｆ- 重要财务指标Ｈ- 历史成交明细Ｔ- 技术指标Ｎ- 最新资讯Ｂ- 网友留言", "", $capturedHTML);  
 		
+		$capturedHTML = str_replace("万", "", $capturedHTML); 
+		$capturedHTML = str_replace("手", "", $capturedHTML); 
 		
 		$parts = split("\|",$capturedHTML);
 		if (count($parts)>2)
    	{
-   		$parts[2]="";
    		$capturedHTML="|";
-   		for ($i=1;$i<count($parts)-1;$i++) 
+   		if (count($parts)>36)
+   		{
+   			$num=36;
+   		}
+   		else
+   		{
+   			$num=count($parts);
+   		}
+   		for ($i=1;$i<$num;$i=$i+2) 
    		{
    				$capturedHTML=$capturedHTML.$parts[$i]."|";		
      	}
