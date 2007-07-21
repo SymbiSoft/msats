@@ -1,0 +1,26 @@
+from key_modifiers import *
+from key_codes import *  
+import keypress 
+import e32
+import telephone
+
+NUMBER2DIAL = "2620888" # Insert number here
+SLEEP = 7
+
+telephone.dial(NUMBER2DIAL)
+
+e32.ao_sleep(SLEEP)
+# Display "0" 
+keypress.simulate_key_mod(EKey0,EKey0,EModifierKeypad)
+
+e32.ao_sleep(SLEEP)
+# Display "1" 
+keypress.simulate_key_mod(EKey1,EKey1,EModifierKeypad) 
+
+e32.ao_sleep(SLEEP)
+# Display "1" 
+keypress.simulate_key_mod(EKey1,EKey1,EModifierKeypad) 
+
+e32.ao_sleep(SLEEP)
+# Display "1" 
+keypress.simulate_key_mod(EKey1,EKey1,EModifierKeypad) 
