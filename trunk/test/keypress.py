@@ -3,9 +3,10 @@ from key_codes import *
 import keypress 
 import e32
 import telephone
+import appswitch
 
 class AutoTradeByPhone:
-	def dialchar(self,char):
+	def presschar(self,char):
 		if char=="0":
 			keypress.simulate_key(EKey0,EKey0)
 		if char=="1":
@@ -28,12 +29,19 @@ class AutoTradeByPhone:
 			keypress.simulate_key(EKey9,EKey9)
 		if char=="#":
 			keypress.simulate_key(EKeyHash,EKeyHash)
+		if char=="*":
+			keypress.simulate_key(EKeyStar,EKeyStar)
 			
-	def dialstr(self,str):
+	def switch(self):
+		appswitch.switch_to_fg(u"Menu")
+		appswitch.switch_to_fg(u"Telephone")
+
+	def pressstr(self,str):
 		for i in range(len(str)):
-			self.dialchar(str[i])
+			self.switch()
+			self.presschar(str[i])
 	
-	def maketrade(self,str):		
+	def dialandsenddtmf(self,str):		
 		splitdata=[]
 		splitdata=str.split("p")
 		sleep = 5
@@ -44,8 +52,10 @@ class AutoTradeByPhone:
 			if splitdata[i+1]=="":
 				e32.ao_sleep(sleep)
 			else:
-				self.dialstr(splitdata[i+1])
- 
+				self.pressstr(splitdata[i+1])
+		e32.ao_sleep(30)
+		telephone.hang_up()
 a=AutoTradeByPhone()
-a.maketrade("2620888p0p1#p1#p1#p1034#") 
+a.dialandsenddtmf("2620888p1p1p1")
+ 
  
