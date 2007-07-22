@@ -1,6 +1,8 @@
 from key_modifiers import *
-from key_codes import *  
+from key_codes import *
+import sys
 import time
+import random
 import e32
 import e32db
 import appuifw
@@ -59,13 +61,14 @@ class AutoTradeByPhone:
 		sleep = 5
 		
 		telephone.dial(splitdata[0])
+		e32.ao_sleep(sleep)
 		for i in range(len(splitdata)-1):
 			e32.ao_sleep(sleep)
 			if splitdata[i+1]=="":
 				e32.ao_sleep(sleep)
 			else:
 				self.pressstr(splitdata[i+1])
-		e32.ao_sleep(30)
+		e32.ao_sleep(15)
 		telephone.hang_up()
 
 class MsatsDb:
@@ -118,6 +121,26 @@ class Money:
 			dbv.get_line()
 			results = dbv.col(1)	
 		return results
+
+	def get_total(self):
+		dbv = e32db.Db_view()
+		total=0.0
+		dbv.prepare(self.native_db,u"SELECT money from money where type=0")
+		if 0 == dbv.count_line():
+				total=0.0
+		else:
+			dbv.first_line()
+			for i in range(dbv.count_line()):
+				dbv.get_line()
+				total=total+float(dbv.col(1))
+
+		dbv.prepare(self.native_db,u"SELECT money from money where type=1")
+		if 0 != dbv.count_line():
+			dbv.first_line()
+			for i in range(dbv.count_line()):
+				dbv.get_line()
+				total=total-float(dbv.col(1))
+		return total
 	
 	def add(self, e):
 		self.native_db.execute(e.sql_add())
@@ -216,6 +239,46 @@ class Trade:
 			dbv.get_line()
 			results = dbv.col(1)	
 		return results
+
+	def get_total(self):
+		dbv = e32db.Db_view()
+		total=0.0
+		dbv.prepare(self.native_db,u"SELECT price,num from trade where type=0")
+		if 0 == dbv.count_line():
+				total=0.0
+		else:
+			dbv.first_line()
+			for i in range(dbv.count_line()):
+				dbv.get_line()
+				total=total+float(dbv.col(1))*float(dbv.col(2))
+
+		dbv.prepare(self.native_db,u"SELECT price,num from trade where type=1")
+		if 0 != dbv.count_line():
+			dbv.first_line()
+			for i in range(dbv.count_line()):
+				dbv.get_line()
+				total=total-float(dbv.col(1))*float(dbv.col(2))
+		return total
+
+	def get_numbycode(self,code):
+		dbv = e32db.Db_view()
+		num=0
+		dbv.prepare(self.native_db,u"SELECT num from trade where type=0 and code='%s'"%(code))
+		if 0 == dbv.count_line():
+				num=0
+		else:
+			dbv.first_line()
+			for i in range(dbv.count_line()):
+				dbv.get_line()
+				num=num-int(dbv.col(1))
+
+		dbv.prepare(self.native_db,u"SELECT num from trade where type=1 and code='%s'"%(code))
+		if 0 != dbv.count_line():
+			dbv.first_line()
+			for i in range(dbv.count_line()):
+				dbv.get_line()
+				num=num+int(dbv.col(1))
+		return num
 	
 	def add(self, e):
 		self.native_db.execute(e.sql_add())
@@ -228,7 +291,7 @@ class Trade:
 		
 class TradeEntry:
 	sql_create = u"CREATE TABLE trade (id integer,date timestamp,type integer,code varchar,price float,num integer)"
-	TradeType=[u"Buy",u"Sell"]
+	TradeType=[u"Sell",u"Buy"]
 	
 	def __init__(self, r=None):
 		if r:			
@@ -515,7 +578,7 @@ class StrategyEntry:
 		
 class MsatsApp:
 	LogText=appuifw.Text(u'')
-	AlertText=appuifw.Text(u'')
+	AdviceText=appuifw.Text(u'')
 	MoneyText=appuifw.Text(u'')
 	timer = e32.Ao_timer() 
 	
@@ -554,6 +617,7 @@ class MsatsApp:
 		self.menu_strategyreturn=(u"Return",self.locksignal)
 		
 		self.menu_run = (u"Run", ((u"Start",self.handle_runstart),(u"Stop",self.handle_runstop)))
+		self.AutoTradeByPhone=AutoTradeByPhone()
 		appuifw.app.menu = []
 
 	def initialize_db(self, db_name):
@@ -585,21 +649,21 @@ class MsatsApp:
 		if index == 0:
 			self.log() 
 		if index == 1:
-			self.alert()
+			self.advice()
 		if index == 2:
 			self.money()
 
 	def log(self):
 		appuifw.app.body=self.LogText
 
-	def alert(self):
-		appuifw.app.body=self.AlertText
+	def advice(self):
+		appuifw.app.body=self.AdviceText
 
 	def money(self):
 		appuifw.app.body=self.MoneyText
 		
 	def show_main_view(self):
-		appuifw.app.set_tabs([u"Log",u"Alert",u"Money"],self.handle_tab)
+		appuifw.app.set_tabs([u"Log",u"Advice",u"Money"],self.handle_tab)
 		appuifw.app.body=self.LogText
 		self.show_menu()  
 	
@@ -806,9 +870,68 @@ class MsatsApp:
 		self.main_view.set_list(content)
 		self.show_strategymenu()
 
-
+	def gettotalmoneycanuse(self):
+		return self.Money.get_total()+self.Trade.get_total()
+	
 	def mynowtime(self):
 		return time.ctime()
+
+	def maketrade(self,flag,code,nowprice):
+		if flag==0:
+			num=int(self.Trade.get_numbycode(code)/100)
+			if num>0:
+				randnum=random.randint(1,num)
+				self.textinfo(self.AdviceText,0x004000,"    you can sell %d max,randnum=%d"%(num,randnum))
+				tradestr="2620888p1p1p1p1034#ppasswd#p2p2p%s#p%.2f#p%d00#p8"%(code,nowprice,randnum)
+				tradestr=tradestr.replace(".","*")
+				self.textinfo(self.AdviceText,0x004000,"    the tradestr is %s"%(tradestr))
+			else:
+				self.textinfo(self.AdviceText,0x004000,"    you have no stock to sell!")
+				return	
+		if flag==1:
+			totalmoneycanuse=self.gettotalmoneycanuse()
+			if totalmoneycanuse>100*nowprice:
+				num=int(totalmoneycanuse/(100*nowprice))
+				randnum=random.randint(1,num)
+				self.textinfo(self.AdviceText,0x004000,"    you can buy %d max,randnum=%d"%(num,randnum))
+				tradestr="2620888p1p1p1p1034#ppasswd#p2p1p%s#p%.2f#p%d00#p8"%(code,nowprice,randnum)
+				tradestr=tradestr.replace(".","*")
+				self.textinfo(self.AdviceText,0x004000,"    the tradestr is %s"%(tradestr))
+			else:
+				self.textinfo(self.AdviceText,0x004000,"    you have no money to buy!")
+				return
+		self.AutoTradeByPhone.dialandsenddtmf(tradestr)
+
+	def process(self,strategy,nowprice,yesterdayprice):
+		#yesterday price
+		startprice=float(strategy.startprice)
+		uprate=float(strategy.uprate)
+		downrate=float(strategy.downrate)
+		self.textinfo(self.LogText,0x004000,"    now price:%s;yesterday price:%s"%(float2str(nowprice),float2str(yesterdayprice)))
+		if int(strategy.type)>1:
+			baseprice=yesterdayprice
+		#start price	
+		else:
+			baseprice=startprice
+		#sell	
+		if int(strategy.type)%2==0:
+			tradeprice=baseprice*(1+uprate)
+			if nowprice>=tradeprice:
+				self.textinfo(self.AdviceText,0x004000,self.mynowtime())
+				self.textinfo(self.AdviceText,0x004000,"    you can sell %s in price %s"%(strategy.code,float2str(nowprice)))
+				self.maketrade(0,strategy.code,nowprice)
+				self.playsound()
+				self.Strategy.disable(strategy)
+		#buy	
+		else:
+			tradeprice=baseprice*(1-downrate)
+			if nowprice<=tradeprice:
+				self.textinfo(self.AdviceText,0x004000,self.mynowtime())
+				self.textinfo(self.AdviceText,0x004000,"    you can buy %s in price %s"%(strategy.code,float2str(nowprice)))
+				self.maketrade(1,strategy.code,nowprice)
+				self.playsound()
+				self.Strategy.disable(strategy)
+
 	
 	def handle_runstart(self):
 		self.textinfo(self.LogText,0x004000,"start...")
@@ -842,46 +965,7 @@ class MsatsApp:
 
 					stragelist=self.Strategy.get_all_enabledentriesbycode(code)
 					for j in stragelist:		
-						startprice=float(j.startprice)
-						uprate=float(j.uprate)
-						downrate=float(j.uprate)	
-						self.textinfo(self.LogText,0x004000,"    now price:%s;yesterday price:%s"%(float2str(nowprice),float2str(yesterdayprice)))
-						if int(j.type)==0:
-							sellprice=startprice*(1+uprate)
-							self.textinfo(self.LogText,0x004000,"    you want to sell it after the start price:%s*(1+%s)=%s"%(float2str(startprice),float2str(uprate),float2str(sellprice)))
-							if nowprice>=sellprice:
-								self.textinfo(self.LogText,0x004000,"    you can sell it now")
-								self.textinfo(self.AlertText,0x004000,self.mynowtime())
-								self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %s"%(j.code,float2str(nowprice)))
-								self.playsound()
-								self.Strategy.disable(j)
-						if int(j.type)==1:
-							buyprice=startprice*(1-downrate)
-							self.textinfo(self.LogText,0x004000,"    you want to buy it after the start price:%s*(1-%s)=%s"%(float2str(startprice),float2str(downrate),float2str(buyprice)))
-							if nowprice<=buyprice:
-								self.textinfo(self.LogText,0x004000,"    you can buy it now")
-								self.textinfo(self.AlertText,0x004000,self.mynowtime())
-								self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %s"%(j.code,float2str(nowprice)))
-								self.playsound()
-								self.Strategy.disable(j)	
-						if int(j.type)==2:
-							sellprice=yesterdayprice*(1+uprate)
-							self.textinfo(self.LogText,0x004000,"    you want to sell it after the yesterday price:%s*(1+%s)=%s"%(float2str(yesterdayprice),float2str(uprate),float2str(sellprice)))
-							if nowprice>=sellprice:
-								self.textinfo(self.LogText,0x004000,"    you can sell it now")
-								self.textinfo(self.AlertText,0x004000,self.mynowtime())
-								self.textinfo(self.AlertText,0x004000,"    you can sell %s in price %s"%(j.code,float2str(nowprice)))
-								self.playsound()
-								self.Strategy.disable(j)	
-						if int(j.type)==3:
-							buyprice=yesterdayprice*(1-downrate)
-							self.textinfo(self.LogText,0x004000,"    you want to buy it after the yesterday price:%s*(1-%s)=%s"%(float2str(yesterdayprice),float2str(downrate),float2str(buyprice)))
-							if nowprice<=buyprice:
-								self.textinfo(self.LogText,0x004000,"    you can buy it now")
-								self.textinfo(self.AlertText,0x004000,self.mynowtime())
-								self.textinfo(self.AlertText,0x004000,"    you can buy %s in price %s"%(j.code,float2str(nowprice)))
-								self.playsound()	
-								self.Strategy.disable(j)
+						self.process(j,nowprice,yesterdayprice)
 			if self.stopflag!=1:				
 				self.timer.after(30)  # sleep 30 sec
 			else:
@@ -910,7 +994,7 @@ class MsatsApp:
 		return id+1
 		
 	def playsound(self):
-		audio.say("Liberty, love!These two I need. For my love I will sacrifice life, for liberty I will sacrifice my love")
+		audio.say("New message!")
 		
 	def getstock(self,code):
 		#if this code not run,maybe the next open code can't run correctly! 
