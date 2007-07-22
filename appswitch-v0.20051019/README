@@ -1,0 +1,26 @@
+appswitch - switch given application to foreground/background
+
+With appswitch, you can control running applications in s60/python.
+
+Following functionality is provided:
+ - listing applications
+ - switching them to foreground/background
+ - closing/killing
+
+source & wins\udeb and armi\urel binaries included.
+
+CHANGELOG:
+
+v0.20051019:
+ - added following functions
+   - application_list
+   - switch_to_bg
+   - end_task
+   - kill_task  
+ 
+v0.20051017:
+ .: initial version
+ 
+ 
+ contact: ssalmine@users.sf.net
+ 
