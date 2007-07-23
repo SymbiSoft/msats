@@ -79,6 +79,7 @@ class MsatsDb:
 		except:
 			self.native_db.create(db_name)
 			self.native_db.open(db_name)
+			self.native_db.execute(SettingEntry.sql_create)
 			self.native_db.execute(MoneyEntry.sql_create)
 			self.native_db.execute(TradeEntry.sql_create)
 			self.native_db.execute(StockEntry.sql_create)
@@ -86,6 +87,85 @@ class MsatsDb:
 
 	def close(self):
 		self.native_db.close()
+
+class Setting:
+	def __init__(self, db_name):
+		try:
+			self.native_db = e32db.Dbms()
+			self.native_db.open(db_name)
+		except:
+			MsatsDb(db_name)
+			self.native_db = e32db.Dbms()
+			self.native_db.open(db_name)	
+	
+	def get_all_entries(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,
+					u"SELECT * from setting ORDER BY account DESC")
+		dbv.first_line()
+		results = []
+		for i in range(dbv.count_line()):
+			dbv.get_line()
+			e = SettingEntry(dbv)
+			results.append(e)
+			dbv.next_line()
+		return results
+
+	def get_number(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,
+					u"SELECT * from setting ORDER BY account DESC")
+		return dbv.count_line()
+	
+	def add(self, e):
+		self.native_db.execute(e.sql_add())
+		
+	def update(self, e):
+		self.native_db.execute(e.sql_update())
+		
+	def delete(self, e):
+		self.native_db.execute(e.sql_delete())
+		
+	def deleteall(self):
+		self.native_db.execute((u"DELETE FROM setting"))
+		
+class SettingEntry:
+	sql_create = u"CREATE TABLE setting (account varchar,password varchar)"
+	
+	def __init__(self, r=None):
+		if r:			
+			self.account  = r.col(1)
+			self.password  = r.col(2)
+		else:
+			self.account  = u""
+			self.password  =u""
+
+	def sql_add(self):
+		sql = "INSERT INTO setting (account,password) VALUES ('%s','%s')"%(self.account,self.password)
+		return unicode(sql)
+
+	def sql_update(self):
+		sql = "update setting set password='%s' where account='%s'"%(self.password,self.account)
+		return unicode(sql)
+	
+	def sql_delete(self):
+		sql = "DELETE FROM setting WHERE account='%s'"%\
+			  (self.account)
+		return unicode(sql)
+	
+	def get_account(self):
+		return self.account	
+	
+	def get_password(self):
+		return self.password
+
+	def get_form(self):
+		result = [(u"Account", 'text', self.account),(u"Password", 'text', self.password)]
+		return result
+		
+	def set_from_form(self, form):
+		self.account = form[0][2]
+		self.password = form[1][2]
 
 class Money:
 	def __init__(self, db_name):
@@ -617,11 +697,13 @@ class MsatsApp:
 		self.menu_strategyreturn=(u"Return",self.locksignal)
 		
 		self.menu_run = (u"Run", ((u"Start",self.handle_runstart),(u"Stop",self.handle_runstop)))
+		self.menu_setting = (u"Setting",self.handle_setting)
 		self.AutoTradeByPhone=AutoTradeByPhone()
 		appuifw.app.menu = []
 
 	def initialize_db(self, db_name):
 		self.msats = MsatsDb(db_name)
+		self.Setting = Setting(db_name)
 		self.Money = Money(db_name)
 		self.Trade = Trade(db_name)
 		self.Stock = Stock(db_name)
@@ -668,7 +750,7 @@ class MsatsApp:
 		self.show_menu()  
 	
 	def show_menu(self):	
-		appuifw.app.menu = [self.menu_money,self.menu_trade,self.menu_stock,self.menu_strategy,self.menu_run]
+		appuifw.app.menu = [self.menu_money,self.menu_trade,self.menu_stock,self.menu_strategy,self.menu_run,self.menu_setting]
 
 	def show_moneymenu(self):	
 		appuifw.app.menu = [self.menu_moneyadd,self.menu_moneyedit,self.menu_moneydelete,self.menu_moneydetail,self.menu_moneyreturn]
@@ -877,12 +959,23 @@ class MsatsApp:
 		return time.ctime()
 
 	def maketrade(self,flag,code,nowprice):
+
+		newentry=SettingEntry()
+		if self.Setting.get_number()==0:
+			self.textinfo(self.LogText,0x004000,"account and password not defined")
+			return
+		else:
+			entrylist=self.Setting.get_all_entries()
+			newentry=entrylist[0]
+			account=newentry.account
+			password=newentry.password
+			
 		if flag==0:
 			num=int(self.Trade.get_numbycode(code)/100)
 			if num>0:
 				randnum=random.randint(1,num)
 				self.textinfo(self.AdviceText,0x004000,"    you can sell %d max,randnum=%d"%(num,randnum))
-				tradestr="2620888p1p1p1p1034#ppasswd#p2p2p%s#p%.2f#p%d00#p8"%(code,nowprice,randnum)
+				tradestr="2620888p1p1p1p%s#p%s#p2p2p%s#p%.2f#p%d00#p8"%(account,password,code,nowprice,randnum)
 				tradestr=tradestr.replace(".","*")
 				self.textinfo(self.AdviceText,0x004000,"    the tradestr is %s"%(tradestr))
 			else:
@@ -894,7 +987,7 @@ class MsatsApp:
 				num=int(totalmoneycanuse/(100*nowprice))
 				randnum=random.randint(1,num)
 				self.textinfo(self.AdviceText,0x004000,"    you can buy %d max,randnum=%d"%(num,randnum))
-				tradestr="2620888p1p1p1p1034#ppasswd#p2p1p%s#p%.2f#p%d00#p8"%(code,nowprice,randnum)
+				tradestr="2620888p1p1p1p%s#p%s#p2p1p%s#p%.2f#p%d00#p8"%(account,password,code,nowprice,randnum)
 				tradestr=tradestr.replace(".","*")
 				self.textinfo(self.AdviceText,0x004000,"    the tradestr is %s"%(tradestr))
 			else:
@@ -932,51 +1025,87 @@ class MsatsApp:
 				self.playsound()
 				self.Strategy.disable(strategy)
 
-	
+	def do_onetime(self):
+		codelist=self.Strategy.get_all_codes()
+		for code in codelist:
+			self.textinfo(self.LogText,0x004000,code)
+			self.textinfo(self.LogText,0x004000,"Getting")
+			if self.stopflag==1:
+				return
+			try:
+				data=self.getstock(code)
+			except:
+				self.textinfo(self.LogText,0x004000,"get the info error!")
+				continue
+
+			self.textinfo(self.LogText,0x004000,data)
+			if data!="error":
+				try:
+					yesterdayprice=float(self.getdataindex(data,5))
+					nowprice=float(self.getdataindex(data,1))
+				except:
+					self.textinfo(self.LogText,0x004000,"the info is not complete")
+					continue
+
+				stragelist=self.Strategy.get_all_enabledentriesbycode(code)
+				for j in stragelist:		
+					self.process(j,nowprice,yesterdayprice)
+
 	def handle_runstart(self):
 		self.textinfo(self.LogText,0x004000,"start...")
+		
 		self.stopflag=0
 
-		if not appuifw.query(u"Not trade time,run continue?",'query'):
-			return
+		trademode=1
+		if not appuifw.query(u"Run in trade mode?",'query'):
+			trademode=0
 		
 		while self.stopflag!=1:
 			self.textinfo(self.LogText,0x004000,self.mynowtime())
-			codelist=self.Strategy.get_all_codes()
-
-			for code in codelist:
-				self.textinfo(self.LogText,0x004000,code)
+			if trademode==1:
+				timepurple=time.localtime()
+				if timepurple.tm_hour==9 and timepurple.tm_min>=30 or timepurple.tm_hour==10 or timepurple.tm_hour==11 and timepurple.tm_min<=30 and timepurple.tm_hour==13 or timepurple.tm_hour==14:
+					self.do_onetime()
+				else:
+					self.textinfo(self.LogText,0x004000,"now is not trade time,do nothing")
+			else:
+				self.do_onetime()
+				
+			for j in range(30):
 				if self.stopflag==1:
 					break
-				try:
-					data=self.getstock(code)
-				except:
-					self.textinfo(self.LogText,0x004000,"get the info error!")
-					continue
-
-				self.textinfo(self.LogText,0x004000,data)
-				if data!="error":
-					try:
-						yesterdayprice=float(self.getdataindex(data,5))
-						nowprice=float(self.getdataindex(data,1))
-					except:
-						self.textinfo(self.LogText,0x004000,"the info is not complete")
-						continue
-
-					stragelist=self.Strategy.get_all_enabledentriesbycode(code)
-					for j in stragelist:		
-						self.process(j,nowprice,yesterdayprice)
-			if self.stopflag!=1:				
-				self.timer.after(30)  # sleep 30 sec
-			else:
-				break
+				else:
+					self.LogText.color=0x004000
+					self.LogText.add(u'.')
+					self.timer.after(1)  # sleep 30 sec
+			self.LogText.add(u'\n')
 			
+			if self.stopflag==1:
+				break
 		self.textinfo(self.LogText,0x004000,"stopped")
-		
+
 	def handle_runstop(self):
-		self.timer.cancel()
 		self.stopflag=1
 
+	def handle_setting(self):
+		newentry=SettingEntry()
+		if self.Setting.get_number()==0:
+			newentry.account=u""
+			newentry.password=u""
+		else:
+			entrylist=self.Setting.get_all_entries()
+			newentry=entrylist[0]
+			
+		data = newentry.get_form()
+		
+		flags = appuifw.FFormEditModeOnly+appuifw.FFormDoubleSpaced
+		f = appuifw.Form(data, flags)
+		f.execute()
+		new_entry = SettingEntry()
+		new_entry.set_from_form(f)
+		self.Setting.deleteall()
+		self.Setting.add(new_entry)			
+		
 	def newmoneyid(self):
 		id=self.Money.get_max_id()
 		return id+1
