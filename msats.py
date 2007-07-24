@@ -238,7 +238,7 @@ class MoneyEntry:
 	def __init__(self, r=None):
 		if r:			
 			self.id  = int(r.col(1))
-			self.date  = float(r.col(2))+1
+			self.date  = r.col(2)
 			self.type  = int(r.col(3))
 			self.money  = float(r.col(4))
 		else:
@@ -376,7 +376,7 @@ class TradeEntry:
 	def __init__(self, r=None):
 		if r:			
 			self.id  = int(r.col(1))
-			self.date  = float(r.col(2))+1
+			self.date  = r.col(2)
 			self.type  = int(r.col(3))
 			self.code=r.col(4)
 			self.price  = float(r.col(5))
@@ -664,6 +664,7 @@ class MsatsApp:
 	
 	def __init__(self):
 		self.lock = e32.Ao_lock()
+		self.app_lock = e32.Ao_lock()
 		self.exit_flag = False
 		appuifw.app.exit_key_handler = self.abort
 		self.entry_list = []
@@ -725,7 +726,8 @@ class MsatsApp:
 		if appuifw.query(u"Are you sure to quit?",'query'):
 			self.exit_flag = True
 			self.lock.signal()
-
+			self.app_lock.signal()
+			
 	def handle_tab(self,index):
 		global lb
 		if index == 0:
@@ -748,7 +750,9 @@ class MsatsApp:
 		appuifw.app.set_tabs([u"Log",u"Advice",u"Money"],self.handle_tab)
 		appuifw.app.body=self.LogText
 		self.show_menu()  
-	
+		self.app_lock.wait()
+
+
 	def show_menu(self):	
 		appuifw.app.menu = [self.menu_money,self.menu_trade,self.menu_stock,self.menu_strategy,self.menu_run,self.menu_setting]
 
@@ -1041,8 +1045,8 @@ class MsatsApp:
 			self.textinfo(self.LogText,0x004000,data)
 			if data!="error":
 				try:
-					yesterdayprice=float(self.getdataindex(data,5))
-					nowprice=float(self.getdataindex(data,1))
+					yesterdayprice=float(self.getdataindex(data,1))
+					nowprice=float(self.getdataindex(data,0))
 				except:
 					self.textinfo(self.LogText,0x004000,"the info is not complete")
 					continue
@@ -1057,14 +1061,14 @@ class MsatsApp:
 		self.stopflag=0
 
 		trademode=1
-		if not appuifw.query(u"Run in trade mode?",'query'):
+		if not appuifw.query(u"Only get trade data on trade time?",'query'):
 			trademode=0
 		
 		while self.stopflag!=1:
 			self.textinfo(self.LogText,0x004000,self.mynowtime())
 			if trademode==1:
 				timepurple=time.localtime()
-				if timepurple.tm_hour==9 and timepurple.tm_min>=30 or timepurple.tm_hour==10 or timepurple.tm_hour==11 and timepurple.tm_min<=30 and timepurple.tm_hour==13 or timepurple.tm_hour==14:
+				if (timepurple.tm_hour==9 and timepurple.tm_min>=30) or (timepurple.tm_hour==10) or (timepurple.tm_hour==11 and timepurple.tm_min<=30) or (timepurple.tm_hour==13) or (timepurple.tm_hour==14):
 					self.do_onetime()
 				else:
 					self.textinfo(self.LogText,0x004000,"now is not trade time,do nothing")
