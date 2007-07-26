@@ -238,7 +238,7 @@ class MoneyEntry:
 	def __init__(self, r=None):
 		if r:			
 			self.id  = int(r.col(1))
-			self.date  = r.col(2)
+			self.date  = float(r.col(2))+8*3600
 			self.type  = int(r.col(3))
 			self.money  = float(r.col(4))
 		else:
@@ -281,7 +281,7 @@ class MoneyEntry:
 		return result
 		
 	def set_from_form(self, form):
-		self.date  = float(form[0][2])+1
+		self.date  = float(form[0][2])+8*3600
 		self.type	 = int(form[1][2][1])
 		self.money   = float(form[2][2])
 
@@ -376,7 +376,7 @@ class TradeEntry:
 	def __init__(self, r=None):
 		if r:			
 			self.id  = int(r.col(1))
-			self.date  = r.col(2)
+			self.date  = float(r.col(2))+8*3600
 			self.type  = int(r.col(3))
 			self.code=r.col(4)
 			self.price  = float(r.col(5))
@@ -426,7 +426,7 @@ class TradeEntry:
 		return result
 		
 	def set_from_form(self, form):
-		self.date  = float(form[0][2])+1
+		self.date  = float(form[0][2])+8*3600
 		self.type	 = int(form[1][2][1])
 		self.code    =form[2][2]
 		self.price   = float(form[3][2])
@@ -664,7 +664,6 @@ class MsatsApp:
 	
 	def __init__(self):
 		self.lock = e32.Ao_lock()
-		self.app_lock = e32.Ao_lock()
 		self.exit_flag = False
 		appuifw.app.exit_key_handler = self.abort
 		self.entry_list = []
@@ -711,6 +710,7 @@ class MsatsApp:
 		self.Strategy = Strategy(db_name)
 		
 	def run(self):
+		self.netinitflag=0
 		while not self.exit_flag:
 			self.show_main_view()
 			self.lock.wait()
@@ -726,7 +726,7 @@ class MsatsApp:
 		if appuifw.query(u"Are you sure to quit?",'query'):
 			self.exit_flag = True
 			self.lock.signal()
-			self.app_lock.signal()
+			
 			
 	def handle_tab(self,index):
 		global lb
@@ -750,7 +750,7 @@ class MsatsApp:
 		appuifw.app.set_tabs([u"Log",u"Advice",u"Money"],self.handle_tab)
 		appuifw.app.body=self.LogText
 		self.show_menu()  
-		self.app_lock.wait()
+	
 
 
 	def show_menu(self):	
@@ -1057,7 +1057,7 @@ class MsatsApp:
 
 	def handle_runstart(self):
 		self.textinfo(self.LogText,0x004000,"start...")
-		
+		self.initialize_net()
 		self.stopflag=0
 
 		trademode=1
@@ -1075,7 +1075,7 @@ class MsatsApp:
 			else:
 				self.do_onetime()
 				
-			for j in range(30):
+			for j in range(450):
 				if self.stopflag==1:
 					break
 				else:
@@ -1128,31 +1128,37 @@ class MsatsApp:
 		
 	def playsound(self):
 		audio.say("New message!")
-		
+			
 	def getstock(self,code):
-		#if this code not run,maybe the next open code can't run correctly! 
-		test1 = "000001"
-		params = urllib.urlencode({'code': test1})
-		headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain","Host":"www.jili8.com","X-Online-Host":"www.jili8.com"}
-		conn = httplib.HTTPConnection("10.0.0.172")
-		conn.request("POST", "/php/getstock.php", params, headers)
-		response = conn.getresponse()
-
 		url='http://www.jili8.com/php/getstock.php?code='+code
-
-		proxies={'http':'http://10.0.0.172:80'} 
-		data=urllib.FancyURLopener(proxies).open(url).read() 
+		proxies={'http':'http://10.0.0.172:80'}
+		#proxies={'http':'http://10.0.0.172:9201'}
+		opener=urllib.FancyURLopener(proxies)
+		#opener.addheader('Accept', 'text/plain')
+		data=opener.open(url).read()
+		opener.close()
 		try:
 			udata=data.decode("utf8")
 			return udata
 		except:
 			return u"error"
+		
 
 	def getdataindex(self,udata,index):
 		usplitdata=[]
 		usplitdata=udata.split(u"|")
 		return usplitdata[index]
-		
+
+	def initialize_net(self):
+		#if this code not run,maybe the next open code can't run correctly!
+		if self.netinitflag!=1:
+			test1 = "000001"
+			params = urllib.urlencode({'code': test1})
+			headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain","Host":"www.jili8.com","X-Online-Host":"www.jili8.com"}
+			conn = httplib.HTTPConnection("10.0.0.172")
+			conn.request("POST", "/php/getstock.php", params, headers)
+			response = conn.getresponse()
+			self.netinitflag=1	
 def main():
 	app = MsatsApp()
 	app.initialize_db(u"e:\\msats.db")
