@@ -1,5 +1,5 @@
 <? 
-function getSohuQuote($stockSymbol = "000001") 
+function get163Quote($stockSymbol = "000001") 
 { 
 if (!$targetURL) $targetURL = "http://quotes.money.163.com/quote/$stockSymbol.html"; //设定要抓取的URL目标 
 $fd = fopen("$targetURL", "r"); 
@@ -37,21 +37,14 @@ while (!feof($fd))
 		
 		$parts = split("\|",$capturedHTML);
 		if (count($parts)>2)
-   	{
-   		$capturedHTML="|";
-   		if (count($parts)>36)
    		{
-   			$num=36;
-   		}
-   		else
-   		{
-   			$num=count($parts);
-   		}
-   		for ($i=1;$i<$num;$i=$i+2) 
-   		{
-   				$capturedHTML=$capturedHTML.$parts[$i]."|";		
-     	}
-   }
+   			$capturedHTML="";
+   			if (count($parts)>36)
+   			{
+   				$capturedHTML=$capturedHTML.$parts[1]."|".$parts[9];
+			
+   			}
+     		}
 
 		echo $capturedHTML; 
 		break; 
@@ -66,8 +59,14 @@ fclose($fd);
 //$symbolCount = count($symbols); 
 //for ($i=0; $i< $symbolCount; $i++) 
 //{ 
-//	getSohuQuote("$symbols[$i]");
-	$code=$_GET['code'];
-	getSohuQuote("$code"); 
+//	get163Quote("$symbols[$i]");
+	$codelist=$_GET['code'];
+	$parts = split(";",$codelist);
+	for ($i=0;$i<count($parts);$i++)
+	{
+		$code=$parts[$i];
+		get163Quote("$code");
+		echo ";";
+	} 
 //} 
 ?> 
