@@ -590,7 +590,7 @@ class Strategy:
 		
 class StrategyEntry:
 	sql_create = u"CREATE TABLE strategy (id integer,code varchar,type integer,startprice float,uprate float,downrate float,enableflag integer)"
-	StrategyType=[u"Sell after up start price",u"Buy after down start price",u"Sell after up previous day price",u"Buy after down previous day price"]
+	StrategyType=[u"Sell start price",u"Buy start price",u"Sell yesterday price",u"Buy yesterday price"]
 	
 	def __init__(self, r=None):
 		if r:			
@@ -825,7 +825,13 @@ class MsatsApp:
 		if not self.entry_list:
 			content = [(u"(Empty)", u"")]
 		else:
-			content = [(unicode(str(item.id)),unicode(str(item.money))) for item in self.entry_list]
+			content=[]
+			for item in self.entry_list:
+				if item.type==0:
+					content.append((e32db.format_time(item.date),u"+ "+unicode(str(item.money))))
+				else:
+					content.append((e32db.format_time(item.date),u"- "+unicode(str(item.money))))
+
 		self.main_view.set_list(content)
 		self.show_moneymenu()
 
@@ -868,7 +874,13 @@ class MsatsApp:
 		if not self.entry_list:
 			content = [(u"(Empty)", u"")]
 		else:
-			content = [(unicode(str(item.id)),item.code) for item in self.entry_list]
+			content=[]
+			for item in self.entry_list:
+				if item.type==0:
+					content.append((e32db.format_time(item.date),unicode(item.code)+u" + "+unicode(str(item.num))+u"*"+unicode(str(item.price))))
+				else:
+					content.append((e32db.format_time(item.date),unicode(item.code)+u" - "+unicode(str(item.num))+u"*"+unicode(str(item.price))))
+					
 		self.main_view.set_list(content)
 		self.show_trademenu()
 					   
@@ -952,7 +964,29 @@ class MsatsApp:
 		if not self.entry_list:
 			content = [(u"(Empty)", u"")]
 		else:
-			content = [(unicode(str(item.id)),item.code) for item in self.entry_list]
+			content=[]
+			for item in self.entry_list:
+				if item.enableflag==0:
+					flagstr=u"D"
+				else:
+					flagstr=u"E"
+					
+				if item.type%2==0:
+					typestr1=u"+"
+					typestr2=u"Sell"
+					rate=item.uprate
+				else:
+					typestr1=u"-"
+					typestr2=u"Buy"
+					rate=item.downrate
+					
+				if item.type>1:
+					sstr=typestr2+u":(1"+typestr1+unicode(str(rate))+u")*yesterday"  					
+				else:
+					sstr=typestr2+u":(1"+typestr1+unicode(str(rate))+u")*"+ unicode(str(item.startprice)) 			
+					
+				content.append((unicode(item.code)+u"("+flagstr+u")",sstr))
+
 		self.main_view.set_list(content)
 		self.show_strategymenu()
 
