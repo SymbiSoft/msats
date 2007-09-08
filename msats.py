@@ -20,6 +20,7 @@ def float2str(i):
 		return i
 
 class AutoTradeByPhone:
+	sleep=5
 	def presschar(self,char):
 		if char=="0":
 			keypress.simulate_key(EKey0,EKey0)
@@ -45,7 +46,8 @@ class AutoTradeByPhone:
 			keypress.simulate_key(EKeyHash,EKeyHash)
 		if char=="*":
 			keypress.simulate_key(EKeyStar,EKeyStar)
-			
+		if char=="v":	
+			keypress.simulate_key(EKeyLeftSoftkey,EKeyLeftSoftkey)
 	def switch(self):
 		appswitch.switch_to_fg(u"Menu")
 		appswitch.switch_to_fg(u"Telephone")
@@ -54,14 +56,22 @@ class AutoTradeByPhone:
 		for i in range(len(str)):
 			self.switch()
 			self.presschar(str[i])
+
+	def unlock(self,str):		
+		for i in range(len(str)-1):
+			e32.ao_sleep(self.sleep)
+			if str[i+1]=="":
+				e32.ao_sleep(sleep)
+			else:
+				self.pressstr(str[i+1])
+		e32.ao_sleep(15)	
 	
 	def dialandsenddtmf(self,str):		
 		splitdata=[]
 		splitdata=str.split("p")
-		sleep = 5
 		
 		telephone.dial(splitdata[0])
-		e32.ao_sleep(sleep)
+		e32.ao_sleep(self.sleep)
 		for i in range(len(splitdata)-1):
 			e32.ao_sleep(sleep)
 			if splitdata[i+1]=="":
@@ -130,22 +140,23 @@ class Setting:
 		self.native_db.execute((u"DELETE FROM setting"))
 		
 class SettingEntry:
-	sql_create = u"CREATE TABLE setting (account varchar,password varchar)"
+	sql_create = u"CREATE TABLE setting (account varchar,password varchar,unlock varchar)"
 	
 	def __init__(self, r=None):
 		if r:			
 			self.account  = r.col(1)
 			self.password  = r.col(2)
+			self.unlock  = r.col(3)
 		else:
 			self.account  = u""
 			self.password  =u""
-
+			self.unlock=u""
 	def sql_add(self):
-		sql = "INSERT INTO setting (account,password) VALUES ('%s','%s')"%(self.account,self.password)
+		sql = "INSERT INTO setting (account,password.unlock) VALUES ('%s','%s','%s')"%(self.account,self.password,self.unlock)
 		return unicode(sql)
 
 	def sql_update(self):
-		sql = "update setting set password='%s' where account='%s'"%(self.password,self.account)
+		sql = "update setting set password='%s',unlock='%s' where account='%s'"%(self.password,self.unlock,self.account)
 		return unicode(sql)
 	
 	def sql_delete(self):
@@ -159,14 +170,18 @@ class SettingEntry:
 	def get_password(self):
 		return self.password
 
+	def get_unlock(self):
+		return self.unlock	
+
 	def get_form(self):
-		result = [(u"Account", 'text', self.account),(u"Password", 'text', self.password)]
+		result = [(u"Account", 'text', self.account),(u"Password", 'text', self.password),(u"Unlock", 'text', self.unlock)]
 		return result
 		
 	def set_from_form(self, form):
 		self.account = form[0][2]
 		self.password = form[1][2]
-
+		self.unlock = form[2][2]
+		
 class Money:
 	def __init__(self, db_name):
 		try:
@@ -1007,6 +1022,7 @@ class MsatsApp:
 			newentry=entrylist[0]
 			account=newentry.account
 			password=newentry.password
+			unlock=newentry.unlock
 			
 		if flag==0:
 			num=int(self.Trade.get_numbycode(code)/100)
@@ -1031,6 +1047,7 @@ class MsatsApp:
 			else:
 				self.textinfo(self.AdviceText,0x004000,"    you have no money to buy!")
 				return
+		self.AutoTradeByPhone.unlock(unlock+u"v")	
 		self.AutoTradeByPhone.dialandsenddtmf(tradestr)
 
 	def process(self,strategy,nowprice,yesterdayprice):
