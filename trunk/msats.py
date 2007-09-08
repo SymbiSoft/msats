@@ -152,7 +152,7 @@ class SettingEntry:
 			self.password  =u""
 			self.unlock=u""
 	def sql_add(self):
-		sql = "INSERT INTO setting (account,password.unlock) VALUES ('%s','%s','%s')"%(self.account,self.password,self.unlock)
+		sql = "INSERT INTO setting (account,password,unlock) VALUES ('%s','%s','%s')"%(self.account,self.password,self.unlock)
 		return unicode(sql)
 
 	def sql_update(self):
@@ -1047,7 +1047,7 @@ class MsatsApp:
 			else:
 				self.textinfo(self.AdviceText,0x004000,"    you have no money to buy!")
 				return
-		self.AutoTradeByPhone.unlock(unlock+u"v")	
+		#self.AutoTradeByPhone.unlock(u"v"+unlock+u"v")	
 		self.AutoTradeByPhone.dialandsenddtmf(tradestr)
 
 	def process(self,strategy,nowprice,yesterdayprice):
