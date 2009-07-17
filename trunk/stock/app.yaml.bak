@@ -1,0 +1,11 @@
+application: orz8
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: .*
+  script: stock.py
+  
+- url: /zipme
+  script: zipme.py
