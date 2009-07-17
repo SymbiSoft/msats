@@ -3,15 +3,15 @@ import urllib
 import httplib
 
 #if this code not run,maybe the next open code can't run correctly! 
-test1 = u"000001"
+test1 = u"600151"
 params = urllib.urlencode({'code': test1})
-headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain","Host":"www.jili8.com","X-Online-Host":"www.jili8.com"}
+headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain","Host":"orz8.appspot.com","X-Online-Host":"orz8.appspot.com"}
 conn = httplib.HTTPConnection("10.0.0.172")
-conn.request("POST", "/php/getstock.php", params, headers)
+conn.request("POST", "/getstock", params, headers)
 response = conn.getresponse()
 
 
-url='http://www.jili8.com/php/getstock2.php?code=000001' 
+url='http://orz8.appspot.com/getstock?code=600151' 
 proxies={'http':'http://10.0.0.172:80'} 
 print 'waiting!...'
 data=urllib.FancyURLopener(proxies).open(url).read() 
