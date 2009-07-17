@@ -6,21 +6,49 @@ import random
 import e32
 import e32db
 import appuifw
-import urllib
-import httplib
 import audio
 import keypress 
 import telephone
 import appswitch
+import urlparse
+import httplib
+import socket
 
+# Global variables that can be manipulated from the program
+proxy_host='10.0.0.172'
+proxy_port=80
+proxy_sock=None
+
+# Similar to urllib.urlopen(...)
+def urlopen(url):
+	global proxy_sock
+	# Find the network location
+	urlparts = urlparse.urlsplit(url)
+	netloc = urlparts[1].split(':')
+	host = netloc[0]
+	port = 80
+	if len(netloc) > 1:
+		port = int(netloc[1])
+	# Connect to the proxy
+	proxy_sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	proxy_sock.connect((proxy_host, proxy_port))
+	# Create HTTP connection
+	h=httplib.HTTPConnection(host, port)
+	#h.debuglevel=1
+	h.sock=proxy_sock
+	h.request('GET', url)
+	r = h.getresponse()
+	return r
+	
 def float2str(i):
 		i='%s'%(float(i))
 		if i[-1]=='0':
 			i=i[:-2]
 		return i
 
+sleep=5
+
 class AutoTradeByPhone:
-	sleep=5
 	def presschar(self,char):
 		if char=="0":
 			keypress.simulate_key(EKey0,EKey0)
@@ -59,7 +87,7 @@ class AutoTradeByPhone:
 
 	def unlock(self,str):		
 		for i in range(len(str)-1):
-			e32.ao_sleep(self.sleep)
+			e32.ao_sleep(sleep)
 			if str[i+1]=="":
 				e32.ao_sleep(sleep)
 			else:
@@ -71,7 +99,7 @@ class AutoTradeByPhone:
 		splitdata=str.split("p")
 		
 		telephone.dial(splitdata[0])
-		e32.ao_sleep(self.sleep)
+		e32.ao_sleep(sleep)
 		for i in range(len(splitdata)-1):
 			e32.ao_sleep(sleep)
 			if splitdata[i+1]=="":
@@ -140,23 +168,25 @@ class Setting:
 		self.native_db.execute((u"DELETE FROM setting"))
 		
 class SettingEntry:
-	sql_create = u"CREATE TABLE setting (account varchar,password varchar,unlock varchar)"
+	sql_create = u"CREATE TABLE setting (account varchar,password varchar,interval integer,unlock varchar)"
 	
 	def __init__(self, r=None):
 		if r:			
 			self.account  = r.col(1)
 			self.password  = r.col(2)
-			self.unlock  = r.col(3)
+			self.interval=int(r.col(3))
+			self.unlock  = r.col(4)
 		else:
 			self.account  = u""
 			self.password  =u""
+			self.interval=60
 			self.unlock=u""
 	def sql_add(self):
-		sql = "INSERT INTO setting (account,password,unlock) VALUES ('%s','%s','%s')"%(self.account,self.password,self.unlock)
+		sql = "INSERT INTO setting (account,password,interval,unlock) VALUES ('%s','%s',%d,'%s')"%(self.account,self.password,self.interval,self.unlock)
 		return unicode(sql)
 
 	def sql_update(self):
-		sql = "update setting set password='%s',unlock='%s' where account='%s'"%(self.password,self.unlock,self.account)
+		sql = "update setting set password='%s',interval=%d,unlock='%s' where account='%s'"%(self.password,self.interval,self.unlock,self.account)
 		return unicode(sql)
 	
 	def sql_delete(self):
@@ -170,17 +200,21 @@ class SettingEntry:
 	def get_password(self):
 		return self.password
 
+	def get_interval(self):
+		return self.interval
+		
 	def get_unlock(self):
 		return self.unlock	
 
 	def get_form(self):
-		result = [(u"Account", 'text', self.account),(u"Password", 'text', self.password),(u"Unlock", 'text', self.unlock)]
+		result = [(u"Account", 'text', self.account),(u"Password", 'text', self.password),(u"Interval", 'number', self.interval),(u"Unlock", 'text', self.unlock)]
 		return result
 		
 	def set_from_form(self, form):
 		self.account = form[0][2]
 		self.password = form[1][2]
-		self.unlock = form[2][2]
+		self.interval = int(form[2][2])
+		self.unlock = form[3][2]
 		
 class Money:
 	def __init__(self, db_name):
@@ -554,6 +588,24 @@ class Strategy:
 				results.append(e.code)
 			dbv.next_line()
 		return results
+	
+	def get_all_enabled_codes(self):
+		dbv = e32db.Db_view()
+		dbv.prepare(self.native_db,u"SELECT * from strategy where enableflag=1 ORDER BY id DESC")
+		dbv.first_line()
+		results = []
+		for i in range(dbv.count_line()):
+			distinct=0
+			dbv.get_line()
+			e = StrategyEntry(dbv)
+			for code in results:
+				if code==e.code:
+					distinct=1
+					break
+			if distinct==0:
+				results.append(e.code)
+			dbv.next_line()
+		return results
 
 	def get_all_enabledentriesbycode(self,code):
 		dbv = e32db.Db_view()
@@ -739,6 +791,7 @@ class MsatsApp:
 
 	def abort(self):
 		if appuifw.query(u"Are you sure to quit?",'query'):
+			self.stopflag=1
 			self.exit_flag = True
 			self.lock.signal()
 			
@@ -1081,7 +1134,7 @@ class MsatsApp:
 				self.Strategy.disable(strategy)
 
 	def do_onetime(self):
-		codelist=self.Strategy.get_all_codes()
+		codelist=self.Strategy.get_all_enabled_codes()
 		for code in codelist:
 			self.textinfo(self.LogText,0x004000,code)
 			self.textinfo(self.LogText,0x004000,"Getting")
@@ -1112,6 +1165,20 @@ class MsatsApp:
 		self.stopflag=0
 
 		trademode=1
+		
+		newentry=SettingEntry()
+		if self.Setting.get_number()==0:
+			self.textinfo(self.LogText,0x004000,"account and password and interval not defined")
+			return
+		else:
+			entrylist=self.Setting.get_all_entries()
+			newentry=entrylist[0]
+			interval=newentry.interval
+		
+		self.LogText.add(u'interval:%d seconds\n'%(interval))
+		timepurple=time.localtime()
+		self.textinfo(self.LogText,0x004000,"%d:%d"%(timepurple.tm_hour,timepurple.tm_min))
+		
 		if not appuifw.query(u"Only get trade data on trade time?",'query'):
 			trademode=0
 		
@@ -1119,20 +1186,22 @@ class MsatsApp:
 			self.textinfo(self.LogText,0x004000,self.mynowtime())
 			if trademode==1:
 				timepurple=time.localtime()
-				if (timepurple.tm_hour==9 and timepurple.tm_min>=30) or (timepurple.tm_hour==10) or (timepurple.tm_hour==11 and timepurple.tm_min<=30) or (timepurple.tm_hour==13) or (timepurple.tm_hour==14):
+		
+				if (timepurple.tm_hour==17 and timepurple.tm_min>=30) or (timepurple.tm_hour==18) or (timepurple.tm_hour==19 and timepurple.tm_min<=30) or (timepurple.tm_hour==21) or (timepurple.tm_hour==22):
 					self.do_onetime()
 				else:
 					self.textinfo(self.LogText,0x004000,"now is not trade time,do nothing")
 			else:
 				self.do_onetime()
 				
-			for j in range(450):
+			self.LogText.add(u'.\n')
+					
+			for j in range(interval):
 				if self.stopflag==1:
 					break
 				else:
 					self.LogText.color=0x004000
-					self.LogText.add(u'.')
-					self.timer.after(1)  # sleep 30 sec
+					self.timer.after(1)  # sleep 1 sec
 			self.LogText.add(u'\n')
 			
 			if self.stopflag==1:
@@ -1147,6 +1216,7 @@ class MsatsApp:
 		if self.Setting.get_number()==0:
 			newentry.account=u""
 			newentry.password=u""
+			newentry.interval=60
 		else:
 			entrylist=self.Setting.get_all_entries()
 			newentry=entrylist[0]
@@ -1181,13 +1251,8 @@ class MsatsApp:
 		audio.say("New message!")
 			
 	def getstock(self,code):
-		url='http://www.jili8.com/php/getstock.php?code='+code
-		proxies={'http':'http://10.0.0.172:80'}
-		#proxies={'http':'http://10.0.0.172:9201'}
-		opener=urllib.FancyURLopener(proxies)
-		#opener.addheader('Accept', 'text/plain')
-		data=opener.open(url).read()
-		opener.close()
+		url='http://orz8.appspot.com/getstock?code='+code
+		data=urlopen(url).read()
 		try:
 			udata=data.decode("utf8")
 			return udata
@@ -1203,12 +1268,7 @@ class MsatsApp:
 	def initialize_net(self):
 		#if this code not run,maybe the next open code can't run correctly!
 		if self.netinitflag!=1:
-			test1 = "000001"
-			params = urllib.urlencode({'code': test1})
-			headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain","Host":"www.jili8.com","X-Online-Host":"www.jili8.com"}
-			conn = httplib.HTTPConnection("10.0.0.172")
-			conn.request("POST", "/php/getstock.php", params, headers)
-			response = conn.getresponse()
+			urlopen("http://orz8.appspot.com/getstock?code=600151")
 			self.netinitflag=1	
 def main():
 	app = MsatsApp()
