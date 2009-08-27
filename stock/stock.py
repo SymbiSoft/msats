@@ -32,9 +32,9 @@ class Getstock(webapp.RequestHandler):
 			content=result.content
 			usplitdata=[]
 			usplitdata=content.split(",")
-			self.response.out.write(usplitdata[3]+"|"+usplitdata[2])
+			self.response.out.write(usplitdata[3]+"|"+usplitdata[2]+"|"+usplitdata[8]+"|"+usplitdata[9])
 		else:
-			self.response.out.write("0|0")
+			self.response.out.write("0|0|0|0")
 
 application = webapp.WSGIApplication([
   ('/getstock', Getstock)

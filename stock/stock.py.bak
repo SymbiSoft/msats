@@ -23,7 +23,10 @@ from google.appengine.ext import webapp
 class Getstock(webapp.RequestHandler):
 	def get(self):
 		code=self.request.get('code')
-		url="http://hq.sinajs.cn/list=sh"+code
+		if code[:1]=='0':
+			url="http://hq.sinajs.cn/list=sz"+code
+		else:
+			url="http://hq.sinajs.cn/list=sh"+code
 		result = urlfetch.fetch(url)
 		if result.status_code == 200:
 			content=result.content

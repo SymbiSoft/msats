@@ -46,7 +46,7 @@ def float2str(i):
 			i=i[:-2]
 		return i
 
-sleep=5
+sleep=3
 
 class AutoTradeByPhone:
 	def presschar(self,char):
@@ -106,7 +106,7 @@ class AutoTradeByPhone:
 				e32.ao_sleep(sleep)
 			else:
 				self.pressstr(splitdata[i+1])
-		e32.ao_sleep(15)
+		e32.ao_sleep(sleep)
 		telephone.hang_up()
 
 class MsatsDb:
@@ -657,7 +657,7 @@ class Strategy:
 		
 class StrategyEntry:
 	sql_create = u"CREATE TABLE strategy (id integer,code varchar,type integer,startprice float,uprate float,downrate float,enableflag integer)"
-	StrategyType=[u"Sell start price",u"Buy start price",u"Sell yesterday price",u"Buy yesterday price"]
+	StrategyType=[u"Sell start price",u"Buy start price",u"Sell yesterday price",u"Buy yesterday price",u"Sell average price",u"Buy average price"]
 	
 	def __init__(self, r=None):
 		if r:			
@@ -1048,7 +1048,9 @@ class MsatsApp:
 					typestr2=u"Buy"
 					rate=item.downrate
 					
-				if item.type>1:
+				if item.type>3:
+					sstr=typestr2+u":(1"+typestr1+unicode(str(rate))+u")*average"  					
+				elif item.type>1:
 					sstr=typestr2+u":(1"+typestr1+unicode(str(rate))+u")*yesterday"  					
 				else:
 					sstr=typestr2+u":(1"+typestr1+unicode(str(rate))+u")*"+ unicode(str(item.startprice)) 			
@@ -1082,7 +1084,7 @@ class MsatsApp:
 			if num>0:
 				randnum=random.randint(1,num)
 				self.textinfo(self.AdviceText,0x004000,"    you can sell %d max,randnum=%d"%(num,randnum))
-				tradestr="2620888p1p1p1p%s#p%s#p2p2p%s#p%.2f#p%d00#p8"%(account,password,code,nowprice,randnum)
+				tradestr="2620888ppp1p1p1p%s#p%s#p2p2p%s#p%.2f#p%d00#p8"%(account,password,code,nowprice,randnum)
 				tradestr=tradestr.replace(".","*")
 				self.textinfo(self.AdviceText,0x004000,"    the tradestr is %s"%(tradestr))
 			else:
@@ -1094,7 +1096,7 @@ class MsatsApp:
 				num=int(totalmoneycanuse/(100*nowprice))
 				randnum=random.randint(1,num)
 				self.textinfo(self.AdviceText,0x004000,"    you can buy %d max,randnum=%d"%(num,randnum))
-				tradestr="2620888p1p1p1p%s#p%s#p2p1p%s#p%.2f#p%d00#p8"%(account,password,code,nowprice,randnum)
+				tradestr="2620888ppp1p1p1p%s#p%s#p2p1p%s#p%.2f#p%d00#p8"%(account,password,code,nowprice,randnum)
 				tradestr=tradestr.replace(".","*")
 				self.textinfo(self.AdviceText,0x004000,"    the tradestr is %s"%(tradestr))
 			else:
@@ -1103,13 +1105,14 @@ class MsatsApp:
 		#self.AutoTradeByPhone.unlock(u"v"+unlock+u"v")	
 		self.AutoTradeByPhone.dialandsenddtmf(tradestr)
 
-	def process(self,strategy,nowprice,yesterdayprice):
+	def process(self,strategy,nowprice,yesterdayprice,averageprice):
 		#yesterday price
 		startprice=float(strategy.startprice)
 		uprate=float(strategy.uprate)
 		downrate=float(strategy.downrate)
-		self.textinfo(self.LogText,0x004000,"    now price:%s;yesterday price:%s"%(float2str(nowprice),float2str(yesterdayprice)))
-		if int(strategy.type)>1:
+		if int(strategy.type)>3:
+			baseprice=averageprice
+		elif int(strategy.type)>1:
 			baseprice=yesterdayprice
 		#start price	
 		else:
@@ -1151,13 +1154,20 @@ class MsatsApp:
 				try:
 					yesterdayprice=float(self.getdataindex(data,1))
 					nowprice=float(self.getdataindex(data,0))
+					averageprice=float(self.getdataindex(data,3))/float(self.getdataindex(data,2))
+					#quan zheng
+					if code[:2]=='58':
+						averageprice=averageprice/100
+						averageprice=round(averageprice,3)
+					else:
+						averageprice=round(averageprice,2)
 				except:
 					self.textinfo(self.LogText,0x004000,"the info is not complete")
 					continue
-
+				self.textinfo(self.LogText,0x004000,"    n:%s;y:%s;a:%s"%(float2str(nowprice),float2str(yesterdayprice),float2str(averageprice)))
 				stragelist=self.Strategy.get_all_enabledentriesbycode(code)
 				for j in stragelist:		
-					self.process(j,nowprice,yesterdayprice)
+					self.process(j,nowprice,yesterdayprice,averageprice)
 
 	def handle_runstart(self):
 		self.textinfo(self.LogText,0x004000,"start...")
@@ -1187,7 +1197,7 @@ class MsatsApp:
 			if trademode==1:
 				timepurple=time.localtime()
 		
-				if (timepurple.tm_hour==17 and timepurple.tm_min>=30) or (timepurple.tm_hour==18) or (timepurple.tm_hour==19 and timepurple.tm_min<=30) or (timepurple.tm_hour==21) or (timepurple.tm_hour==22):
+				if (timepurple.tm_hour==17 and timepurple.tm_min>=25) or (timepurple.tm_hour==18) or (timepurple.tm_hour==19 and timepurple.tm_min<=30) or (timepurple.tm_hour==21) or (timepurple.tm_hour==22):
 					self.do_onetime()
 				else:
 					self.textinfo(self.LogText,0x004000,"now is not trade time,do nothing")
@@ -1272,7 +1282,7 @@ class MsatsApp:
 			self.netinitflag=1	
 def main():
 	app = MsatsApp()
-	app.initialize_db(u"e:\\msats.db")
+	app.initialize_db(u"c:\\msats.db")
 	app.run()
 
 if __name__ == '__main__':
