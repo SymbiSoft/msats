@@ -1,0 +1,1 @@
+This project devotes to develop stock auto trade system used in smart phone(eg.Nokia N72).Develop Language is pys60
